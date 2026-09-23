@@ -9,7 +9,7 @@
   영상 연결: <video>의 data-src-landscape / data-src-portrait / poster 경로만 바꾸면 됩니다. 인트로 시간은 스크립트의 INTRO 객체.
   색: --brand-red #D0000E (Explore 호버, 신청 페이지 제출 버튼, 연무의 붉은 기). Explore 대기 상태는 다크 와인 --nav-chip-bg.
   연무 조정: .stage의 --smoke-strength(강도) / --smoke-speed(속도 배수) / --smoke-height(하단 높이 비율) / --smoke-warmth(레드 가미 0~1). 콘솔에서 __smokeProbe(1)로 렌더 진단.
-  버튼: .btn-slide(Join the Expedition 두 곳) — 호버 시 우측에서 화살표 슬라이드 인(스프링), 클릭 시 scale .96. Explore는 배경색 호버만.
+  버튼: .btn-slide(Join the Expedition 두 곳) — 호버 시 우측에서 화살표 슬라이드 인(스프링), 클릭 시 scale .96. Explore는 배경색 호버만. 모바일 네비는 축소판.
   텍스트 복구: <div class="stage bare ...">에서 bare 클래스를 지우면 헤드라인·CTA·정보가 다시 보입니다.
   상단 네비: Figma 브랜드 아이덴티티 Frame 14 (node 2248:57633, 1920×72) 수치 그대로. 색·여백은 --nav-* 토큰.
   파일 규격과 카피 슬롯은 IA.md 11·12절 참고.
@@ -219,7 +219,12 @@
 
   /* mobile */
   @media (max-width:599px){
-    :root{--gutter:18px;--nav-x-left:20px;--nav-x-right:16px}
+    :root{--gutter:18px;--nav-x-left:16px;--nav-x-right:12px}
+    /* 네비: 로고 91 + Explore + Join the Expedition 이 360~375px 안에 들어가도록 한 단계 축소 (높이 40은 유지) */
+    .land-nav{gap:10px}
+    .land-nav__actions{gap:6px;flex-shrink:0}
+    .land-nav__link,.land-nav__login{font-size:14px;padding:0 10px;letter-spacing:-.2px}
+    .land-nav .btn-slide__arrow{display:none}     /* 모바일 네비에서는 화살표 생략 (폭 22px 절약) */
     .layer-ui{gap:12px}
     .headline{font-size:clamp(28px,9.5vw,40px);line-height:1.16}
     .headline .display{font-size:1.2em}
