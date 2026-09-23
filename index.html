@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="CPP 2026 — 스크롤 없는 한 화면, 배경 영상 풀블리드 랜딩 페이지">
 <!--
-  흐름: 인트로(블랙 + 문구, 약 3초) → 영상 1회 재생(하단 진행 바 + Skip) → 마지막 프레임 정지 + 엔딩("Stand with me." + CTA 한 덩어리, 화면 정중앙) 페이드 인 + 하단 WebGL 연무 → CTA는 join.html로 이동.
+  흐름: 인트로(블랙 + 문구, 약 3초) → 영상 1회 재생(하단 진행 바 + Skip) → 마지막 프레임 정지 + 엔딩("Stand with me." + CTA 한 덩어리, 화면 정중앙) 페이드 인 + 하단 WebGL 연무 → CTA는 join.html로 이동. Skip은 검정 페이드를 거쳐 엔딩으로.
   영상 연결: <video>의 data-src-landscape / data-src-portrait / poster 경로만 바꾸면 됩니다. 인트로 시간은 스크립트의 INTRO 객체.
   색: --brand-red #D0000E (Explore 호버, 신청 페이지 제출 버튼, 연무의 붉은 기). Explore 대기 상태는 다크 와인 --nav-chip-bg.
   연무 조정: .stage의 --smoke-strength(강도) / --smoke-speed(속도 배수) / --smoke-height(하단 높이 비율) / --smoke-warmth(레드 가미 0~1). 콘솔에서 __smokeProbe(1)로 렌더 진단.
@@ -148,6 +148,12 @@
   .stage.ended .smoke{opacity:1}
   .stage.cinema .smoke{opacity:0}
 
+  /* ---------- skip 블랙아웃: Skip 시 0.5초 검정 → 검정 뒤에서 끝으로 이동 → 문구와 함께 1.4초에 걸쳐 걷힘 ---------- */
+  .blackout{position:absolute;inset:0;z-index:1;background:#000;opacity:0;pointer-events:none;transition:opacity .5s var(--ease)}
+  .stage.blackout-in .blackout{opacity:1}
+  .stage.blackout-out .blackout{opacity:0;transition-duration:1.4s}
+  .stage.blackout-in .play-progress,.stage.blackout-in .skip{opacity:0;pointer-events:none}
+
   /* ---------- ending: 영상 종료 시 페이드 인 — 문구 + CTA 한 덩어리를 네비 아래 영역 정중앙에 ---------- */
   .ending{position:absolute;inset:0;z-index:2;pointer-events:none}
   .ending-group{position:absolute;left:0;right:0;top:50%;translate:0 -50%;display:flex;flex-direction:column;align-items:center;gap:28px;padding:0 max(20px,var(--gutter))}
@@ -262,7 +268,7 @@
     *{transition:none!important}
     .ending-title,.ending-cta,.play-progress,.skip,.intro-layer,.intro-text{transition:none}
     .ending-title,.ending-cta{translate:0 0}
-    .smoke{transition:none}
+    .smoke,.blackout{transition:none}
   }
 </style>
 </head>
@@ -288,6 +294,7 @@
 
   <!-- 엔딩 연무 (WebGL, 엔딩 노출 후에만 렌더) -->
   <canvas class="smoke" id="smoke" aria-hidden="true"></canvas>
+  <div class="blackout" id="blackout" aria-hidden="true"></div>
 
   <!-- L2 콘텐츠 그리드 -->
   <div class="layer-ui">
@@ -635,9 +642,24 @@
     watchBtn.focus();
   }
   /* ---------- Skip: 끝으로 이동해 바로 엔딩 ---------- */
+  let skipping=false;
   document.getElementById('skipBtn').addEventListener('click',function(){
-    if(mode==='video') finishVideo();
-    else { cancelAnimationFrame(raf); fbElapsed=FB_LEN; draw(FB_LEN*1000); setProgress(FB_LEN,FB_LEN); if(stage.classList.contains('cinema')) exitCinema(); showEnding(true); }
+    if(skipping || stage.classList.contains('ended')) return;
+    skipping=true; ended=true;                                   /* 재시도 로직이 다시 재생하지 않도록 */
+    stage.classList.add('blackout-in');                          /* 1) 0.5초 검정으로 */
+    const BLACK_IN=520;
+    setTimeout(function(){
+      /* 2) 검정 뒤에서 끝 지점으로 이동 + 엔딩 시작 */
+      if(mode==='video'){ video.pause(); if(video.duration && isFinite(video.duration)){ video.currentTime=video.duration; setProgress(video.duration,video.duration); } }
+      else { cancelAnimationFrame(raf); fbElapsed=FB_LEN; draw(FB_LEN*1000); setProgress(FB_LEN,FB_LEN); }
+      if(stage.classList.contains('cinema')) exitCinema();
+      showEnding(true);
+      /* 3) 마지막 프레임이 준비되면(또는 0.6초 후) 검정을 천천히 걷음 — 마지막 프레임이 어두워 이음새가 보이지 않음 */
+      let done=false;
+      const reveal=function(){ if(done) return; done=true; stage.classList.remove('blackout-in'); stage.classList.add('blackout-out'); setTimeout(function(){ stage.classList.remove('blackout-out'); skipping=false; },1500); };
+      if(mode==='video') video.addEventListener('seeked',reveal,{once:true});
+      setTimeout(reveal,600);
+    },BLACK_IN);
   });
 
   watchBtn.addEventListener('click',enterCinema);
