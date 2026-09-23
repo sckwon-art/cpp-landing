@@ -6,7 +6,7 @@
 <meta name="description" content="CPP 2026 — 스크롤 없는 한 화면, 배경 영상 풀블리드 랜딩 페이지">
 <!--
   흐름: 인트로(블랙 + 문구, 약 3초) → 영상 1회 재생(하단 진행 바 + Skip) → 마지막 프레임 정지 + 엔딩("Stand with me." + CTA 한 덩어리, 화면 정중앙) 페이드 인 + 하단 WebGL 연무 → CTA는 join.html로 이동. Skip은 검정 페이드를 거쳐 엔딩으로.
-  영상 연결: <video>의 data-src-landscape / data-src-portrait / poster 경로만 바꾸면 됩니다. 인트로 시간은 스크립트의 INTRO 객체.
+  영상 연결: <video>의 data-src-landscape / data-src-portrait / poster 경로만 바꾸면 됩니다. 인트로 시간은 스크립트의 INTRO 객체. 크롭 기준점(얼굴 높이)은 .stage의 --video-focus-y.
   색: --brand-red #D0000E (Explore 호버, 신청 페이지 제출 버튼, 연무의 붉은 기). Explore 대기 상태는 다크 와인 --nav-chip-bg.
   연무 조정: .stage의 --smoke-strength(강도) / --smoke-speed(속도 배수) / --smoke-height(하단 높이 비율) / --smoke-warmth(레드 가미 0~1). 콘솔에서 __smokeProbe(1)로 렌더 진단.
   버튼: .btn-slide(Join the expedition 두 곳) — 호버 시 우측에서 화살표 슬라이드 인(스프링), 클릭 시 scale .96. Explore는 배경색 호버만. 모바일 네비는 축소판.
@@ -68,7 +68,9 @@
 
   /* L0 background video */
   .layer-video{position:absolute;inset:0;z-index:0;background:var(--ink)}
-  .layer-video > *{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  /* 크롭 기준점: 화면 비율이 16:9보다 넓으면 위아래가 잘리는데, 기준을 얼굴 높이(영상 세로 30%)에 두어 머리가 항상 남고 여유분은 바닥에서 잘리게 함 */
+  .stage{--video-focus-y:30%}
+  .layer-video > *{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% var(--video-focus-y)}
 
   /* L1 scrim */
   .layer-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;transition:opacity .6s var(--ease);
