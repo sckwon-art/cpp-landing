@@ -138,7 +138,7 @@
 
   /* ---------- intro: 접속 직후 블랙 배경 + 중앙 문구 → 문구 아웃 → 블랙이 걷히며 영상 시작 ---------- */
   .intro-layer{position:absolute;inset:0;z-index:1;background:#000;pointer-events:none;transition:opacity 1.2s var(--ease)}
-  .intro-text{position:absolute;left:0;right:0;top:50%;margin:0;padding:0 max(20px,var(--gutter));text-align:center;font-family:var(--font-title);font-weight:700;font-size:clamp(42px,4.5vw,83px);line-height:1.05;letter-spacing:-.01em;color:#f7f7f8;text-wrap:balance;opacity:0;transform:translateY(calc(-50% + 10px));transition:opacity 1.2s var(--ease),transform 1.2s var(--ease)}
+  .intro-text{position:absolute;left:0;right:0;top:50%;margin:0;padding:0 max(20px,var(--gutter));text-align:center;font-family:var(--font-title);font-weight:700;font-size:clamp(46px,4.95vw,91px);line-height:1.05;letter-spacing:-.01em;color:#f7f7f8;text-wrap:balance;opacity:0;transform:translateY(calc(-50% + 10px));transition:opacity 1.2s var(--ease),transform 1.2s var(--ease)}
   .stage.intro-in .intro-text{opacity:1;transform:translateY(-50%)}
   .stage.intro-out .intro-text{opacity:0;transition:opacity .8s var(--ease)}
   .stage.intro-done .intro-layer{opacity:0}
@@ -173,9 +173,9 @@
   .stage.cinema .cinema-exit{opacity:1;pointer-events:auto}
 
   /* ---------- 재생 중 표시: 하단 반투명 진행 바 + 텍스트형 Skip (영상 끝나면 사라짐) ---------- */
-  .play-progress{position:absolute;z-index:3;left:0;right:0;bottom:0;height:3px;background:rgba(247,247,248,.14);transition:opacity .6s var(--ease)}
+  .play-progress{position:absolute;z-index:3;left:0;right:0;bottom:env(safe-area-inset-bottom,0px);height:3px;background:rgba(247,247,248,.14);transition:opacity .6s var(--ease)}
   .play-progress .progress-fill{background:rgba(247,247,248,.75)}
-  .skip{position:absolute;z-index:3;right:max(20px,var(--gutter));bottom:14px;display:inline-flex;align-items:center;gap:4px;padding:6px 4px;font-family:var(--font-latin);font-size:13px;font-weight:600;letter-spacing:-.1px;color:rgba(247,247,248,.7);transition:color .2s,opacity .6s var(--ease)}
+  .skip{position:absolute;z-index:3;right:max(20px,var(--gutter));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:inline-flex;align-items:center;gap:4px;padding:6px 4px;font-family:var(--font-latin);font-size:13px;font-weight:600;letter-spacing:-.1px;color:rgba(247,247,248,.7);transition:color .2s,opacity .6s var(--ease)}
   .skip:hover{color:#f7f7f8}
   .skip .ic{width:14px;height:14px}
   .stage.ended .play-progress,.stage.ended .skip{opacity:0;pointer-events:none}
@@ -245,7 +245,7 @@
     .facts dd{white-space:normal;font-size:13px;line-height:1.35}
     .meta{justify-content:space-between;font-size:12px}
     dialog{width:calc(100vw - 24px)}
-    .intro-text{font-size:clamp(28px,8vw,36px)}
+    .intro-text{font-size:clamp(28px,8vw,36px)}   /* 모바일은 두 줄 문구 때문에 별도 유지 */
     .sheet{padding:20px;border-radius:16px}
   }
 
@@ -524,6 +524,7 @@
   const INTRO={inMs:1200, holdMs:1000, outMs:800, blackMs:1200};
   let introActive=true;
   function startPlayback(){
+    if(ended){ if(mode==='video'){ video.pause(); if(video.duration && isFinite(video.duration)){ video.currentTime=video.duration; setProgress(video.duration,video.duration); } } return; }  /* 이미 Skip/종료됨 */
     if(mode==='video'){ if(reduce.matches){ video.pause(); showEnding(true); } else video.play().catch(function(){}); }
     else if(mode==='fallback'){ if(reduce.matches) showEnding(true); else { last=0; cancelAnimationFrame(raf); raf=requestAnimationFrame(loop); } }
     /* mode==='loading' 이면 loadeddata / useFallback 에서 이어서 시작 */
