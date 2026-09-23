@@ -39,7 +39,7 @@ L0  배경           <video autoplay muted playsinline> 1회 재생 후 마지�
 | 바 | `nav.land-nav` | 1920×72, 배경 없음 (영상 위) |
 | 좌 | Ludyte 로고 `assets/logo.svg` | x 80 / y 26, 90.6×20, 흰색 |
 | 우 | `Explore` | 높이 40, 패딩 9/12, 라운드 8, 배경 **다크 와인 `#5A1A1F`**, 호버 시 **브랜드 레드 `#D0000E`**(Figma 원본 `#111927`은 흰 버튼 대비 작아 보여 교체. 대기 상태에 브랜드 레드를 쓰지 않는 이유: 1차 CTA인 흰 버튼보다 튀어 위계가 뒤집힘), 글자 `#f7f7f8`. 폭은 라벨 길이대로, 높이 40 고정 → https://ludyte.com/ 으로 이동 |
-| 우 | `Join the Expedition` (Figma 원본 라벨 `Sign up - It’s FREE`) | 높이 40, Explore와 같은 폭, 배경 `#fff`, 글자 `#171719`. 버튼 간격 8, 우측 여백 20 → **join.html로 이동** |
+| 우 | `Join the expedition` (Figma 원본 라벨 `Sign up - It’s FREE`) | 높이 40, Explore와 같은 폭, 배경 `#fff`, 글자 `#171719`. 버튼 간격 8, 우측 여백 20 → **join.html로 이동** |
 | 타이포 | body-base/semibold | DM Sans SemiBold 16px / 22px / 자간 -0.32px, opsz 14 |
 
 Figma는 데스크톱만 정의되어 있어 태블릿·모바일은 좌측 여백만 20px로 줄이고(라이브 사이트와 동일) 나머지는 유지한다.
@@ -100,7 +100,7 @@ Figma는 데스크톱만 정의되어 있어 태블릿·모바일은 좌측 여�
 | 요소 | 스타일 | 타이밍 |
 |---|---|---|
 | 문구 `Stand with me.` | Mona Sans SemiCondensed Bold(700), 46~91px (4.95vw), `#f7f7f8`. SemiBold(600)도 `assets/fonts`에 선언돼 있어 `font-weight`만 바꾸면 교체 | 1.2초 페이드 + 10px 상승 |
-| CTA `Join the Expedition →` | 문구 아래 28px. 상단 네비 Explore와 동일 규격(높이 40, 패딩 9/12, 라운드 8, DM Sans 16px/600), 흰색 배경. 호버 시 화살표 슬라이드 인(7절) | 문구보다 0.5초 늦게 1초 페이드 → **join.html로 이동** |
+| CTA `Join the expedition →` | 문구 아래 28px. 상단 네비 Explore와 동일 규격(높이 40, 패딩 9/12, 라운드 8, DM Sans 16px/600), 흰색 배경. 호버 시 화살표 슬라이드 인(7절) | 문구보다 0.5초 늦게 1초 페이드 → **join.html로 이동** |
 
 - 시네마 모드로 처음부터 다시 보면 엔딩이 사라졌다가, 끝나면 시네마 모드를 자동 종료하고 다시 나타난다.
 - 대체 배경(캔버스)도 15초 뒤 같은 엔딩을 띄운다.
@@ -113,13 +113,13 @@ Figma는 데스크톱만 정의되어 있어 태블릿·모바일은 좌측 여�
 
 ## 6. 신청 페이지 `join.html` (CTA 이동처)
 
-Figma "Ludyte CPP — Strategy / Landing Explorations" › `01 · The Invitation`(node 59:370)을 랜딩 톤앤매너로 워싱한 별도 페이지. 상단 `Join the Expedition`과 엔딩 `Become a First Ally`가 모두 여기로 이동한다.
+Figma "Ludyte CPP — Strategy / Landing Explorations" › `01 · The Invitation`(node 59:370)을 랜딩 톤앤매너로 워싱한 별도 페이지. 상단 `Join the expedition`과 엔딩 `Become a First Ally`가 모두 여기로 이동한다.
 
 | 영역 | 구성 | 워싱 내용 |
 |---|---|---|
 | 네비 | 로고(랜딩으로 복귀) / 중앙 `EXPEDITION / FOUNDING EXPLORERS` / 우측 `Explore` 버튼(ludyte.com) | 랜딩과 같은 72px, 좌 80 / 우 20, **sticky**(스크롤해도 상단 고정, 배경 불투명). 시안의 `APPLICATION 01 / 05` 텍스트는 제거하고 랜딩 네비와 같은 Explore 버튼(40px, 라운드 8, 다크 와인, 호버 브랜드 레드)으로 대체 |
 | 좌: 스토리 | 아이브로우 `A NEW CHAPTER STARTS HERE` / 타이틀 `Stand with me.` / 리드 / 본문 | 라임 아이브로우 → 무채색. 타이틀은 Mona Sans SemiCondensed Bold 52~82px, 본문 DM Sans |
-| 우: 신청 카드 | `Join the Expedition` / 필드 5개(이름·이메일·채널 URL·오디언스 규모·다음 챕터) / 동의 체크 / 제출 / 안내문 | 카드 `#f6f4ee` 라운드 24 유지. 필드 라운드 9 → 8. 라임 56px 필 버튼 → **브랜드 레드 `#D0000E`**(호버 `#B5000C`, 흰 글자, 대비 5.7:1) 48px 라운드 8. 라벨 DM Sans 700 12px 대문자 |
+| 우: 신청 카드 | `Join the expedition` / 필드 5개(이름·이메일·채널 URL·오디언스 규모·다음 챕터) / 동의 체크 / 제출 / 안내문 | 카드 `#f6f4ee` 라운드 24 유지. 필드 라운드 9 → 8. 라임 56px 필 버튼 → **브랜드 레드 `#D0000E`**(호버 `#B5000C`, 흰 글자, 대비 5.7:1) 48px 라운드 8. 라벨 DM Sans 700 12px 대문자 |
 | 제출 | 필수: 이름·이메일·URL·동의 | 페이지 안에서 완료 상태(`Application received.`)로 전환, 랜딩 복귀 버튼. 전송처 미연결 |
 | 반응형 | ≥1024 2단(우측 최대 638px) / 1023 이하 1단 / ≤599 네비 중앙 라벨 숨김 | 이 페이지는 세로 스크롤 허용 |
 
@@ -127,7 +127,7 @@ Figma "Ludyte CPP — Strategy / Landing Explorations" › `01 · The Invitation
 
 ## 7. 버튼 마이크로 인터랙션 (slide-arrow)
 
-상단 `Join the Expedition`과 엔딩 `Join the Expedition`에 적용(`.btn-slide`). Explore는 배경색 호버만 있고 이 인터랙션은 넣지 않는다.
+상단 `Join the expedition`과 엔딩 `Join the expedition`에 적용(`.btn-slide`). Explore는 배경색 호버만 있고 이 인터랙션은 넣지 않는다.
 
 | 상태 | 동작 |
 |---|---|
@@ -211,6 +211,8 @@ Figma "Ludyte CPP — Strategy / Landing Explorations" › `01 · The Invitation
 
 ## 12. 교체해야 할 카피 슬롯
 
+표기 규칙: 버튼·문장은 문장식(Join the expedition, Send my application). "Founding Explorer"는 참가자 호칭이라 대문자 유지. 대문자 라벨(A NEW CHAPTER STARTS HERE 등)은 CSS 변환.
+
 | 슬롯 | 현재 임시 문구 |
 |---|---|
 | 아이브로우 | CPP 2026 · 사전 등록 접수 중 |
@@ -220,6 +222,6 @@ Figma "Ludyte CPP — Strategy / Landing Explorations" › `01 · The Invitation
 | 핵심 정보 | 일정 2026.10.15 – 11.30 / 장소 서울 · 온라인 동시 / 대상 크리에이터 · 스튜디오 |
 | 인트로 문구 | They backed the vision. / They opened the way. |
 | 엔딩 문구 | Stand with me. |
-| 엔딩 CTA | Join the Expedition |
-| 상단 CTA | Join the Expedition |
+| 엔딩 CTA | Join the expedition |
+| 상단 CTA | Join the expedition |
 | 문의 이메일 | hello@cpp.example |
