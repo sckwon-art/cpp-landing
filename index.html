@@ -138,7 +138,7 @@
 
   /* ---------- intro: 접속 직후 블랙 배경 + 중앙 문구 → 문구 아웃 → 블랙이 걷히며 영상 시작 ---------- */
   .intro-layer{position:absolute;inset:0;z-index:1;background:#000;pointer-events:none;transition:opacity 1.2s var(--ease)}
-  .intro-text{position:absolute;left:0;right:0;top:50%;margin:0;padding:0 max(20px,var(--gutter));text-align:center;font-family:var(--font-title);font-weight:700;font-size:clamp(46px,4.95vw,91px);line-height:1.05;letter-spacing:-.01em;color:#f7f7f8;text-wrap:balance;opacity:0;transform:translateY(calc(-50% + 10px));transition:opacity 1.2s var(--ease),transform 1.2s var(--ease)}
+  .intro-text{position:absolute;left:0;right:0;top:50%;margin:0;padding:0 max(20px,var(--gutter));text-align:center;font-family:var(--font-title);font-weight:700;font-size:clamp(40px,3.9vw,72px);line-height:1.05;letter-spacing:-.01em;color:#f7f7f8;text-wrap:balance;opacity:0;transform:translateY(calc(-50% + 10px));transition:opacity 1.2s var(--ease),transform 1.2s var(--ease)}
   .stage.intro-in .intro-text{opacity:1;transform:translateY(-50%)}
   .stage.intro-out .intro-text{opacity:0;transition:opacity .8s var(--ease)}
   .stage.intro-done .intro-layer{opacity:0}
