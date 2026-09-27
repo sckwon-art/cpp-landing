@@ -145,7 +145,7 @@
   .stage.intro .play-progress,.stage.intro .skip{opacity:0;pointer-events:none}
 
   /* ---------- ending smoke (WebGL): 엔딩 노출 후 바닥 전체에 고르게 깔린 연무가 아주 느리게 움직임 ---------- */
-  .stage{--smoke-strength:.16;--smoke-speed:1;--smoke-height:.42;--smoke-warmth:.4}   /* 강도(0~1) / 속도 배수 / 하단 높이 비율 / 레드 가미(0~1, 바닥 기준) */
+  .stage{--smoke-strength:.19;--smoke-speed:1;--smoke-height:.42;--smoke-warmth:.4}   /* 강도(0~1) / 속도 배수 / 하단 높이 비율 / 레드 가미(0~1, 바닥 기준) */
   .smoke{position:absolute;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 2s var(--ease) .6s}
   .stage.ended .smoke{opacity:1}
   .stage.cinema .smoke{opacity:0}
@@ -309,6 +309,13 @@
   .apply__body{margin:0;font-size:clamp(16px,1.25vw,18px);line-height:1.5;color:rgba(247,247,248,.55);text-wrap:pretty}
 
   .apply__story{transition:opacity .55s var(--ease),translate .55s var(--ease)}
+  /* 서약 완료: 도장이 찍히는 순간 화면 아래에서 붉은 빛(히어로 엔딩과 같은 연무)이 차오름. 히어로가 보이면 숨김 */
+  .apply__inner{position:relative;z-index:1}
+  .apply{min-height:100svh}   /* 큰 화면에서도 신청 섹션이 화면을 채워, 제출 후 히어로를 완전히 가릴 수 있게 */
+  .pl-glow{position:fixed;inset:0;z-index:0;display:block;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .6s var(--ease);
+    --smoke-strength:.5;--smoke-speed:.8;--smoke-height:.55;--smoke-warmth:1;--smoke-red:1.15}   /* 1 초과: 회색 성분을 빼서 채도를 올림 */
+  .pl-glow.is-on{opacity:1}
+  .pl-glow.is-fallback{background:linear-gradient(to top,rgba(122,14,22,.5) 0,rgba(92,18,26,.2) 28%,rgba(10,11,15,0) 55%)}
   .apply.is-focus .apply__story{opacity:0;translate:0 -14px;pointer-events:none}
   .pl-sheet-wrap{transition:translate .9s cubic-bezier(.33,1,.68,1);filter:drop-shadow(0 18px 32px rgba(0,0,0,.42)) drop-shadow(0 2px 3px rgba(0,0,0,.3))}
   .apply.is-focus .pl-sheet-wrap{will-change:translate}
@@ -396,7 +403,7 @@
   .pl-signed{display:grid;justify-items:center;align-self:center;gap:10px;text-align:center;visibility:hidden}
   .pl-signed.show{visibility:visible}
   .pl-signed svg.pl-sig{display:block;width:min(100%,420px);height:auto;overflow:visible}
-  .pl-sig-ink{fill:var(--pen)}
+  .pl-sig-ink{fill:#3a332d}   /* 서명 잉크: 종이·본문과 같은 따뜻한 먹색 */
   .pl-sig-pen path{stroke-dasharray:1 100000;stroke-dashoffset:100}   /* 처음엔 아무 획도 없음 (둥근 선 끝이 점으로 보이지 않게 경로 밖으로 밀어 둠) */
   /* 서명: 글씨는 처음부터 잉크(채움). 폰트에서 뽑은 획 중심선을 펜 순서대로 그어, 그 선이 지나간 자리만 드러냄 (JS: drawSignature) */
   .pl-sig-line{width:min(100%,400px);height:1.5px;background:var(--paper-fg);opacity:.7;transform:scaleX(0);transform-origin:left center;transition:transform .8s var(--ease)}
@@ -575,6 +582,7 @@
 <!-- L3 다이얼로그 -->
 <!-- [실험] 신청 폼 섹션 (join.html 내용을 히어로 아래로) -->
 <section class="apply" id="apply" aria-labelledby="applyStoryTitle">
+  <canvas class="pl-glow" id="plGlow" aria-hidden="true"></canvas>
   <div class="apply__inner">
     <div class="apply__story">
       <p class="apply__eyebrow">A new chapter starts here</p>
@@ -757,14 +765,16 @@
   function showEnding(on){ stage.classList.toggle('ended',on); ending.inert=!on; if(on) smoke.start(); else smoke.stop(); }
 
   /* ---------- 엔딩 연무: WebGL 프래그먼트 셰이더 (FBM 노이즈 + 균일 바닥 층, 하단 마스크, 디더링). 에셋 없음 ---------- */
-  const smoke=(function(){
-    const cv=document.getElementById('smoke');
+  /* 연무 렌더러 팩토리: 히어로 엔딩(#smoke)과 서약 완료 후 붉은 빛(#plGlow)이 같은 셰이더를 씀.
+     cv: 캔버스, varsEl: --smoke-* 값을 읽을 요소, opts.active(): 다시 켜도 되는지, opts.riseMs: 켤 때 아래에서 차오르는 시간, opts.fallback: WebGL 실패 시 CSS 그라데이션으로 대체 */
+  function makeSmoke(cv, varsEl, opts){
+    opts=opts||{};
     const touch=matchMedia('(hover: none)').matches;
-    let gl=null, u=null, raf=0, t0=0, last=0, running=false, ready=false, failed=false;
+    let gl=null, u=null, raf=0, t0=0, last=0, running=false, ready=false, failed=false, riseT0=0;
     const VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
     const FS=[
       '#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
-      'uniform vec2 uRes;uniform float uTime;uniform float uHeight;uniform float uStrength;uniform float uWarmth;',
+      'uniform vec2 uRes;uniform float uTime;uniform float uHeight;uniform float uStrength;uniform float uWarmth;uniform float uRed;',
       'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}',
       'float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
       ' float a=hash(i),b=hash(i+vec2(1.,0.)),c=hash(i+vec2(0.,1.)),d=hash(i+vec2(1.,1.));',
@@ -783,10 +793,10 @@
       ' a=clamp(a,0.,1.);',
       ' vec3 cool=vec3(.62,.66,.72); vec3 warm=vec3(.60,.16,.18);',        /* 차가운 회색 / 브랜드 레드 #D0000E의 탁한 톤 */
       ' float wmix=uWarmth*(1.-smoothstep(0.,uHeight,uv.y));',                /* 바닥은 따뜻하게, 위로 갈수록 원래 회색 */
-      ' vec3 col=mix(cool,mix(cool,warm,.42),wmix);',
+      ' vec3 col=mix(cool,mix(cool,warm,uRed),wmix);',
       ' gl_FragColor=vec4(col*a,a);}'                                        /* premultiplied 출력 */
     ].join('\n');
-    function css(name,def){ const v=parseFloat(getComputedStyle(stage).getPropertyValue(name)); return isNaN(v)?def:v; }
+    function css(name,def){ const v=parseFloat(getComputedStyle(varsEl).getPropertyValue(name)); return isNaN(v)?def:v; }
     function init(){
       if(ready||failed) return ready;
       try{
@@ -799,38 +809,43 @@
         const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
         const loc=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-        u={res:gl.getUniformLocation(pr,'uRes'),time:gl.getUniformLocation(pr,'uTime'),height:gl.getUniformLocation(pr,'uHeight'),strength:gl.getUniformLocation(pr,'uStrength'),warmth:gl.getUniformLocation(pr,'uWarmth')};
+        u={res:gl.getUniformLocation(pr,'uRes'),time:gl.getUniformLocation(pr,'uTime'),height:gl.getUniformLocation(pr,'uHeight'),strength:gl.getUniformLocation(pr,'uStrength'),warmth:gl.getUniformLocation(pr,'uWarmth'),red:gl.getUniformLocation(pr,'uRed')};
         gl.disable(gl.BLEND); gl.clearColor(0,0,0,0);   /* 매 프레임 투명으로 지우고 premultiplied 색을 그대로 씀 */
         ready=true;
-      }catch(e){ failed=true; cv.hidden=true; }
+      }catch(e){ failed=true; if(opts.fallback) cv.classList.add('is-fallback'); else cv.hidden=true; }
       return ready;
     }
     function size(){ const k=touch?.4:.5; const w=Math.max(1,Math.floor(innerWidth*k)), hh=Math.max(1,Math.floor(innerHeight*k)); if(cv.width!==w||cv.height!==hh){ cv.width=w; cv.height=hh; } gl.viewport(0,0,w,hh); }
-    function draw(sec){
+    function draw(sec,now){
       size();
+      /* 차오름: 켠 순간부터 riseMs 동안 높이·강도가 0 → 목표값 (ease-out) */
+      let k=1; if(opts.riseMs && riseT0){ const pr=Math.min(1,((now||performance.now())-riseT0)/opts.riseMs); k=1-Math.pow(1-pr,3); }
       gl.uniform2f(u.res,cv.width,cv.height);
       gl.uniform1f(u.time,sec*css('--smoke-speed',1));
-      gl.uniform1f(u.height,css('--smoke-height',.42));
-      gl.uniform1f(u.strength,css('--smoke-strength',.12));
+      gl.uniform1f(u.height,Math.max(.001,css('--smoke-height',.42)*k));
+      gl.uniform1f(u.strength,css('--smoke-strength',.12)*k);
       gl.uniform1f(u.warmth,css('--smoke-warmth',.4));
+      gl.uniform1f(u.red,css('--smoke-red',.42));
       gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     }
     const minStep=touch?1000/30:0;   /* 모바일 30fps 제한 */
     function loop(now){
       if(!running) return;
       if(!t0) t0=now;
-      if(now-last>=minStep){ last=now; draw((now-t0)/1000); }
+      if(now-last>=minStep){ last=now; draw((now-t0)/1000,now); }
       raf=requestAnimationFrame(loop);
     }
     return {
-      start:function(){ if(!init()) return; if(reduce.matches){ draw(12); return; } if(running) return; running=true; last=0; raf=requestAnimationFrame(loop); },
+      start:function(){ if(!init()) return; if(reduce.matches){ riseT0=0; draw(12); return; } if(running) return; riseT0=performance.now(); running=true; last=0; raf=requestAnimationFrame(loop); },
       stop:function(){ running=false; cancelAnimationFrame(raf); if(ready){ gl.clear(gl.COLOR_BUFFER_BIT); } },
       pause:function(){ if(running){ running=false; cancelAnimationFrame(raf); } },
-      resume:function(){ if(ready && !running && stage.classList.contains('ended') && !reduce.matches){ running=true; last=0; raf=requestAnimationFrame(loop); } },
+      resume:function(){ if(ready && !running && (opts.active?opts.active():true) && !reduce.matches){ running=true; last=0; raf=requestAnimationFrame(loop); } },
       /* 진단: 그린 직후 같은 호출 안에서 픽셀을 읽어 알파 분포를 돌려줌 (합성 전이라 버퍼가 살아 있음) */
-      probe:function(strength){ if(!init()) return {error:'no webgl'}; const keep=stage.style.getPropertyValue('--smoke-strength'); if(strength!=null) stage.style.setProperty('--smoke-strength',String(strength)); draw(12); const w=cv.width,h=cv.height,px=new Uint8Array(w*h*4); gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px); let bA=0,tA=0,nb=0,nt=0,mx=0; for(let y=0;y<h;y++){ for(let x=0;x<w;x+=2){ const a=px[(y*w+x)*4+3]; if(a>mx) mx=a; if(y<h*.3){bA+=a;nb++;} else if(y>h*.7){tA+=a;nt++;} } } if(strength!=null){ if(keep) stage.style.setProperty('--smoke-strength',keep); else stage.style.removeProperty('--smoke-strength'); } return {w:w,h:h,bottom:+(bA/nb/255).toFixed(3),top:+(tA/nt/255).toFixed(3),max:+(mx/255).toFixed(3),glError:gl.getError()}; }
+      probe:function(strength){ if(!init()) return {error:'no webgl'}; const keep=varsEl.style.getPropertyValue('--smoke-strength'); if(strength!=null) varsEl.style.setProperty('--smoke-strength',String(strength)); draw(12); const w=cv.width,h=cv.height,px=new Uint8Array(w*h*4); gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px); let bA=0,tA=0,nb=0,nt=0,mx=0; for(let y=0;y<h;y++){ for(let x=0;x<w;x+=2){ const a=px[(y*w+x)*4+3]; if(a>mx) mx=a; if(y<h*.3){bA+=a;nb++;} else if(y>h*.7){tA+=a;nt++;} } } if(strength!=null){ if(keep) varsEl.style.setProperty('--smoke-strength',keep); else varsEl.style.removeProperty('--smoke-strength'); } return {w:w,h:h,bottom:+(bA/nb/255).toFixed(3),top:+(tA/nt/255).toFixed(3),max:+(mx/255).toFixed(3),glError:gl.getError()}; }
     };
-  })();
+  }
+  const smoke=makeSmoke(document.getElementById('smoke'), stage, {active:function(){ return stage.classList.contains('ended'); }});
+  window.__makeSmoke=makeSmoke;
   window.__smokeProbe=smoke.probe;
   document.addEventListener('visibilitychange',function(){ if(document.hidden) smoke.pause(); else smoke.resume(); });
 
@@ -1199,6 +1214,21 @@
       t+=dt;
     });
   }
+  /* 서약 완료 후 붉은 빛: 신청 섹션이 네비 아래까지 올라와 히어로가 안 보일 때만 켬 */
+  const glowCv=document.getElementById('plGlow');
+  const glow=window.__makeSmoke?window.__makeSmoke(glowCv, glowCv, {riseMs:1600, fallback:true, active:function(){ return glowCv.classList.contains('is-on'); }}):null;
+  let glowStarted=false;
+  function glowVisible(){ return apply.getBoundingClientRect().top<=document.querySelector('.land-nav').offsetHeight+1; }
+  function syncGlow(){
+    if(!apply.classList.contains('is-done')) return;
+    const on=glowVisible();
+    glowCv.classList.toggle('is-on',on);
+    if(!glow) return;
+    if(on){ if(!glowStarted){ glowStarted=true; glow.start(); } else glow.resume(); } else glow.pause();
+  }
+  function startGlow(){ syncGlow(); }
+  addEventListener('scroll',function(){ requestAnimationFrame(syncGlow); },{passive:true});
+  document.addEventListener('visibilitychange',function(){ if(!glow||!glowStarted) return; if(document.hidden) glow.pause(); else if(glowCv.classList.contains('is-on')) glow.resume(); });
   async function sign(){
     const name=nameEl.value.trim(), reduce=reduceMq.matches, signed=document.getElementById('plSigned');
     document.getElementById('capName').textContent=name; document.getElementById('capDate').textContent=today;
@@ -1217,6 +1247,7 @@
     signed.classList.add('caption'); sheet.classList.add('is-captioned'); await wait(reduce?0:700);
     sheet.classList.add('sealed');                             /* 인장 */
     apply.classList.add('is-done');
+    startGlow();
   }
 })();
 </script>

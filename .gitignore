@@ -2,8 +2,5 @@
 .claude/
 .DS_Store
 
-# 보관용 영상 (페이지는 assets/hero-16x9.mp4 만 사용)
-assets/hero-v*.mp4
-assets/hero-1470x630-*.mp4
-assets/hero-2944x1248.mp4
-assets/hero-16x9-crf19.mp4
+# 보관용 영상 (페이지는 assets/hero-16x9.mp4 만 사용, 나머지는 assets/hero-archive/ 에 모아 둠)
+assets/hero-archive/

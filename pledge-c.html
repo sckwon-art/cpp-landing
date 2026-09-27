@@ -130,7 +130,7 @@
   .signed{display:grid;justify-items:center;align-self:center;gap:10px;text-align:center;visibility:hidden}
   .signed.show{visibility:visible}
   .signed svg.sig{display:block;width:min(100%,420px);height:auto;overflow:visible}
-  .sig-ink{fill:var(--pen)}
+  .sig-ink{fill:#3a332d}   /* 서명 잉크: 종이·본문과 같은 따뜻한 먹색 */
   .sig-pen path{stroke-dasharray:1 100000;stroke-dashoffset:100}   /* 처음엔 아무 획도 없음 (둥근 선 끝이 점으로 보이지 않게 경로 밖으로 밀어 둠) */
   /* 서명: 글씨는 처음부터 잉크(채움). 폰트에서 뽑은 획 중심선을 펜 순서대로 그어, 그 선이 지나간 자리만 드러냄 (JS: drawSignature) */
   .sig-line{width:min(100%,400px);height:1.5px;background:var(--paper-fg);opacity:.7;transform:scaleX(0);transform-origin:left center;transition:transform .8s var(--ease)}
