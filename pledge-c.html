@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pledge C · Step by step</title>
+<!-- 실험: 서약서형 신청 폼 (단계형). 로컬 전용, 배포하지 않음. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Fraunces:opsz,wght,SOFT@9..144,700..900,0..100&family=Instrument+Serif:ital@0;1&family=Mrs+Saint+Delafield&display=swap">
+<style>
+  @font-face{font-family:"Mona Sans SemiCondensed";font-weight:700;font-style:normal;font-display:swap;src:url("assets/fonts/MonaSans_SemiCondensed-Bold.ttf") format("truetype")}
+  :root{
+    color-scheme:dark;
+    --ink:#0A0B0F; --fg:#f7f7f8; --muted:rgba(247,247,248,.55);
+    --brand-red:#D0000E; --brand-red-hover:#B5000C;
+    --pen:#1f2a48;
+    --paper-fg:#1c1b18; --paper-body:#3a352c; --paper-muted:#6f685c; --paper-rule:rgba(60,48,30,.28); --paper-hair:rgba(60,48,30,.16);
+    --font-latin:"DM Sans",system-ui,sans-serif;
+    --font-title:"Mona Sans SemiCondensed","DM Sans",sans-serif;
+    --font-doc:"Instrument Serif",Georgia,"Times New Roman",serif;
+    --font-sign:"Mrs Saint Delafield","Brush Script MT",cursive;
+    --ease:cubic-bezier(.2,.7,.2,1);
+  }
+  *{box-sizing:border-box}
+  html{scrollbar-gutter:stable;overflow-anchor:none}
+  html,body{margin:0}
+  body{background:var(--ink);color:var(--fg);font-family:var(--font-latin);font-variation-settings:"opsz" 14;-webkit-font-smoothing:antialiased;min-height:100vh}
+  [hidden]{display:none!important}
+  a{color:inherit}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  :focus-visible{outline:2px solid var(--brand-red);outline-offset:3px;border-radius:2px}
+
+  /* 실험 바 */
+  .xp-bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;padding:0 20px 0 32px;background:rgba(10,11,15,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .xp-bar img{display:block;width:91px;height:20px}
+  .xp-label{font-size:13px;color:var(--muted);letter-spacing:.02em}
+  .xp-toggle{display:flex;gap:6px}
+  .xp-toggle a{display:inline-flex;align-items:center;height:34px;padding:0 12px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;color:var(--muted);background:rgba(247,247,248,.06);white-space:nowrap}
+  @media (max-width:599px){ .xp-toggle a{font-size:12px;padding:0 10px} .xp-toggle .long{display:none} }
+  .xp-toggle a[aria-current="page"]{background:#f7f7f8;color:#171719}
+
+  /* 섹션 레이아웃 */
+  .apply{padding:clamp(56px,9vh,110px) 80px clamp(72px,12vh,140px);background:linear-gradient(180deg,rgba(140,112,118,.10) 0,rgba(140,112,118,0) 240px),var(--ink)}
+  .apply__inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,660px);gap:clamp(32px,5vw,72px);align-items:start;max-width:1280px;margin:0 auto}
+  .apply__story{display:grid;gap:18px;max-width:560px;padding-top:40px;position:sticky;top:112px}
+  .apply__eyebrow{margin:0;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .apply__title{margin:0;font-family:var(--font-title);font-weight:700;font-size:clamp(40px,3.9vw,72px);line-height:1.04;letter-spacing:-.01em;text-wrap:balance}
+  .apply__lead{margin:0;font-size:clamp(19px,1.6vw,24px);line-height:1.4;text-wrap:pretty}
+  .apply__body{margin:0;font-size:clamp(16px,1.25vw,18px);line-height:1.5;color:var(--muted);text-wrap:pretty}
+  .apply__story{transition:opacity .55s var(--ease),translate .55s var(--ease)}
+  .apply.is-focus .apply__story{opacity:0;translate:0 -14px;pointer-events:none}
+  .sheet-wrap{transition:translate .9s cubic-bezier(.33,1,.68,1);filter:drop-shadow(0 18px 32px rgba(0,0,0,.42)) drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+  .apply.is-focus .sheet-wrap{will-change:translate}
+
+  /* ================= 서약서: 높이 고정. 머리(위) · 조작부(아래)는 제자리, 질문은 종이 정중앙 ================= */
+  .sheet{position:relative;display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:minmax(0,1fr);height:620px;color:var(--paper-fg);color-scheme:light;padding:48px 60px 44px;overflow:hidden;
+    background:#f3ecdf url("assets/paper/paper-texture.jpg") center/cover;
+    -webkit-mask-image:url("assets/paper/paper-edge.png");-webkit-mask-size:100% 100%;-webkit-mask-repeat:no-repeat;
+    mask-image:url("assets/paper/paper-edge.png");mask-size:100% 100%;mask-repeat:no-repeat}
+  .sheet>*{min-width:0;grid-column:1}
+
+  /* 머리: 발행처 줄 + 제목 + 이중 괘선 */
+  .sheet__head{grid-row:1;display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:18px;border-bottom:3px double var(--paper-rule)}
+  .sheet__title{margin:0;font-family:var(--font-title);font-weight:700;font-size:34px;line-height:1.05;letter-spacing:-.01em}
+  .progress{display:flex;gap:6px;margin:0;padding:0;list-style:none}
+  .progress li{width:18px;height:3px;border-radius:2px;background:var(--paper-hair);transition:background .35s var(--ease)}
+  .progress li.is-done{background:var(--paper-muted)}
+  .progress li.is-now{background:var(--paper-fg)}
+  .sheet.is-signing .progress li{background:var(--paper-muted)}
+
+  /* 질문 / 서명: 종이 전체 높이를 차지하는 칸 안에서 정중앙. 머리·조작부와는 겹치지 않을 만큼만 큼 */
+  .center{grid-row:1/-1;grid-column:1;align-self:center;display:grid;pointer-events:none}
+  .center>*{grid-area:1/1;min-width:0;pointer-events:auto}
+  .stage{position:relative;display:grid;transition:opacity .45s var(--ease),translate .45s var(--ease)}
+  .stage>.step{grid-area:1/1;align-self:center;display:grid;justify-items:center;grid-template-rows:minmax(42px,1fr) 56px minmax(42px,1fr);row-gap:4px;min-width:0;text-align:center;transition:opacity .38s var(--ease),translate .38s var(--ease)}
+  .stage>.step:not(.is-current){opacity:0;translate:0 12px;visibility:hidden;pointer-events:none}
+  .stage>.step.is-leaving{opacity:0;translate:0 -10px;transition-duration:.22s}
+  /* 오류 문구는 질문 아래 바깥에 떠 있어 가운데 정렬에 영향을 주지 않음 */
+  .q-error{position:absolute;left:0;right:0;top:100%;margin:12px 0 0;height:20px;font:italic 17px/20px var(--font-doc);color:var(--paper-muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* 문장 줄 · 입력 줄(정중앙) · 문장 줄 */
+  .line{margin:0;align-self:center;font-family:var(--font-doc);font-size:24px;line-height:42px;color:var(--paper-fg);white-space:nowrap}
+  .line--note{font-family:var(--font-latin);font-size:13px;line-height:1.45;color:var(--paper-muted);white-space:normal}
+  .field{align-self:center;width:min(100%,380px)}
+  .field input{display:block;width:100%;height:52px;padding:6px 8px 4px;font:italic 30px/1.2 var(--font-doc);color:var(--pen);text-align:center;background:transparent;border:0;border-bottom:1.5px solid var(--paper-rule);border-radius:0;outline:0;transition:border-color .2s}
+  .field input::placeholder{color:rgba(111,104,92,.6);font-style:italic}
+  .field input:focus{border-bottom-color:var(--pen)}
+  .field.is-missing input{border-bottom-color:var(--pen)}
+  /* 빠진 칸: 빨간 표시 없이 제자리에서 살짝 흔들어 알려 줌 */
+  .is-nudge{animation:pl-nudge .42s cubic-bezier(.36,.07,.19,.97)}
+  @keyframes pl-nudge{0%,100%{translate:0 0}20%{translate:-4px 0}40%{translate:4px 0}60%{translate:-2.5px 0}80%{translate:2px 0}}
+  .field--area{width:min(100%,440px)}
+  .stage>.step[data-step="3"]{grid-template-rows:minmax(42px,1fr) 84px minmax(42px,1fr)}
+  /* 위아래 문장 줄은 같은 높이(1fr) → 줄이 바뀌어도 입력칸은 정중앙. 위 줄은 입력칸에 붙고, 아래 줄은 위로 붙음 */
+  .step>.line:first-child{align-self:end}
+  .step>.line:last-child{align-self:start;padding-top:4px}
+  .blank{display:inline-block;position:relative;vertical-align:baseline}
+  .blank select{font:italic 24px/1.2 var(--font-doc);color:var(--pen);background:transparent;border:0;border-bottom:1.5px solid var(--paper-rule);padding:0 18px 1px 4px;margin:0 2px;width:9.6em;outline:0;border-radius:0;appearance:none;-webkit-appearance:none;cursor:pointer;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236f685c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0 center/13px}
+  .blank select:focus{border-bottom-color:var(--pen)}
+  .sheet input:-webkit-autofill,.sheet input:-webkit-autofill:hover,.sheet input:-webkit-autofill:focus{-webkit-text-fill-color:var(--pen);-webkit-box-shadow:0 0 0 1000px #f3ecdf inset;box-shadow:0 0 0 1000px #f3ecdf inset;caret-color:var(--pen);transition:background-color 9999s}
+  .sheet input,.sheet select,.sheet textarea{scroll-margin-top:96px;scroll-margin-bottom:24px}
+  .field--area textarea{display:block;width:100%;height:84px;resize:none;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(60,48,30,.35) transparent;border:0;outline:0;padding:0 2px;font:italic 22px/42px var(--font-doc);color:var(--pen);text-align:center;
+    background:transparent repeating-linear-gradient(to bottom,transparent 0,transparent 41px,var(--paper-rule) 41px,var(--paper-rule) 42px)}
+  .field--area textarea::placeholder{color:rgba(111,104,92,.6)}
+  .agree{display:inline-flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.45;color:#3b372f;cursor:pointer;text-align:left}
+  .agree input{width:18px;height:18px;margin:0;accent-color:var(--paper-fg);flex:none}
+  .agree.is-missing{color:var(--paper-fg)}
+
+  /* 조작부: 종이 아래쪽 고정. 뒤로(좌) · 다음(우) */
+  .pledge-foot{grid-row:3;display:flex;align-items:center;justify-content:space-between;gap:12px;height:44px;transition:opacity .45s var(--ease)}
+  .back-btn{flex:none;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 10px 0 6px;margin-left:-6px;border:0;border-radius:8px;background:transparent;color:var(--paper-muted);font:600 14px/1 var(--font-latin);cursor:pointer;transition:color .15s,background .15s,opacity .25s}
+  .back-btn:hover{color:var(--paper-fg);background:rgba(60,48,30,.06)}
+  .back-btn svg,.next-btn svg,.send svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .back-btn.is-hidden{opacity:0;visibility:hidden}
+  .foot-right{flex:none;display:flex;align-items:center;gap:14px}
+  .foot-actions{display:grid}
+  .foot-actions>*{grid-area:1/1;justify-self:end}
+  .next-btn,.send{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px 0 18px;border:0;border-radius:8px;font:700 15px/1 var(--font-latin);letter-spacing:-.1px;white-space:nowrap;cursor:pointer;transition:background .15s,opacity .25s}
+  .next-btn{background:var(--paper-fg);color:#f3ecdf}
+  .next-btn:hover{background:#000}
+  .send{background:var(--brand-red);color:#fff;gap:10px}
+  .send:hover{background:var(--brand-red-hover)}
+  .foot-actions .is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+
+  /* 제출: 질문·조작부가 제자리에서 사라지고, 같은 중앙에 서명 */
+  .sheet.is-signing .stage,.sheet.is-signing .pledge-foot{opacity:0;pointer-events:none}
+  .sheet.is-signing .stage{translate:0 -8px}
+  .is-gone{visibility:hidden}
+  .signed{display:grid;justify-items:center;align-self:center;gap:10px;text-align:center;visibility:hidden}
+  .signed.show{visibility:visible}
+  .signed svg.sig{display:block;width:min(100%,420px);height:auto;overflow:visible}
+  .sig-text{font-family:var(--font-sign);font-size:118px;fill:transparent;stroke:var(--pen);stroke-width:1.2;stroke-linejoin:round;stroke-dasharray:2600;stroke-dashoffset:2600}
+  .signed.draw .sig-text{animation:sig-draw 2.4s cubic-bezier(.45,.05,.35,1) forwards, sig-fill .7s ease 2s forwards}
+  @keyframes sig-draw{to{stroke-dashoffset:0}}
+  @keyframes sig-fill{to{fill:var(--pen);stroke-width:.4}}
+  .sig-line{width:min(100%,400px);height:1.5px;background:var(--paper-fg);opacity:.7;transform:scaleX(0);transform-origin:left center;transition:transform .8s var(--ease)}
+  .signed.line .sig-line{transform:scaleX(1)}
+  .sig-caption{display:grid;width:100%;margin:4px 0 0;font:700 11px/1.5 var(--font-latin);letter-spacing:.16em;text-transform:uppercase;color:var(--paper-muted);opacity:0;translate:0 6px;transition:opacity .8s var(--ease),translate .8s var(--ease)}
+  .sig-thanks{margin:12px 0 0;font-family:var(--font-doc);font-size:21px;line-height:1.4;color:var(--paper-fg);text-wrap:balance;opacity:0;translate:0 6px;transition:opacity .8s var(--ease) .15s,translate .8s var(--ease) .15s}
+  .sig-thanks>span{display:block;white-space:nowrap}
+  .sig-caption>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .signed.caption .sig-caption,.signed.caption .sig-thanks{opacity:1;translate:0 0}
+
+  .seal{position:absolute;right:38px;bottom:26px;width:126px;height:126px;color:var(--brand-red);mix-blend-mode:multiply;opacity:0;scale:1.9;rotate:-24deg;pointer-events:none}
+  .seal svg{display:block;width:100%;height:100%;overflow:visible}
+  .sheet.sealed .seal{animation:stamp .5s cubic-bezier(.2,.9,.3,1.08) forwards}
+  @keyframes stamp{0%{opacity:0;scale:1.45;rotate:-20deg}55%{opacity:.95}100%{opacity:.93;scale:1;rotate:-9deg}}
+
+  @media (max-width:1199px){
+    .xp-bar{padding:0 16px}
+    .xp-label{display:none}
+    .apply{padding:40px 20px 64px}
+    .apply__inner{grid-template-columns:1fr;gap:32px}
+    .apply__story{position:static;padding-top:0}
+  }
+  @media (max-width:599px){
+    .sheet{height:580px;padding:34px 24px 30px}
+    .sheet__title{font-size:26px}
+    .progress li{width:12px}
+    .line{font-size:20px;white-space:normal}
+    .stage>.step{grid-template-rows:minmax(38px,1fr) 52px minmax(38px,1fr)}
+    .stage>.step[data-step="3"]{grid-template-rows:minmax(38px,1fr) 84px minmax(38px,1fr)}
+    .line{line-height:32px}
+    .field input{height:48px;font-size:25px}
+    .blank select{font-size:20px}
+    .field--area textarea{font-size:19px}
+    .sig-thanks{font-size:min(16px,4.15vw)}   /* 좁은 폰에서도 두 줄 유지 */
+    .seal{width:96px;height:96px;right:16px;bottom:18px}
+  }
+  /* 터치 기기: 빈칸의 터치 영역만 위로 넓힘 */
+  @media (hover:none){
+    .blank select{padding-top:12px;margin-top:-12px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation-duration:.01ms!important;animation-delay:0s!important}
+  }
+</style>
+</head>
+<body>
+<header class="xp-bar">
+  <a href="index-form.html" aria-label="폼 통합 실험으로"><img src="assets/logo.svg" width="91" height="20" alt="Ludyte"></a>
+  <span class="xp-label">Pledge form experiment · C · Step by step</span>
+  <nav class="xp-toggle" aria-label="실험 전환">
+    <a href="pledge-a.html">A<span class="long"> · Paper image</span></a>
+    <a href="pledge-b.html">B<span class="long"> · Code paper</span></a>
+    <a href="pledge-c.html" aria-current="page">C<span class="long"> · Step by step</span></a>
+  </nav>
+</header>
+
+<main class="apply">
+  <div class="apply__inner">
+    <div class="apply__story">
+      <p class="apply__eyebrow">A new chapter starts here</p>
+      <h1 class="apply__title">Become a Founding Explorer.</h1>
+      <p class="apply__lead">The people behind a vision are the ones who make it real.</p>
+      <p class="apply__body">Tell us about your work, your community, and the creative future you want to open together.</p>
+    </div>
+
+    <div class="sheet-wrap">
+      <form class="sheet" id="sheet" aria-labelledby="pledgeTitle" novalidate>
+        <header class="sheet__head">
+          <h2 class="sheet__title" id="pledgeTitle">Join the expedition</h2>
+          <ol class="progress" id="progress" aria-hidden="true"><li></li><li></li><li></li><li></li></ol>
+        </header>
+
+        <div class="center">
+          <div class="stage" id="stage">
+            <div class="step is-current" data-step="1">
+              <p class="line">I,</p>
+              <div class="field"><label class="sr" for="pName">Creator or team name</label><input id="pName" name="name" type="text" autocomplete="organization" placeholder="your name or team" required spellcheck="false"></div>
+              <p class="line">stand with Ludyte as a Founding Explorer.</p>
+            </div>
+            <div class="step" data-step="2" inert>
+              <p class="line">My work lives at</p>
+              <div class="field"><label class="sr" for="pUrl">Primary channel URL</label><input id="pUrl" name="url" type="url" inputmode="url" placeholder="https://" required pattern="https?:\/\/[^\s\/]+\.[^\s]+" spellcheck="false"></div>
+              <p class="line">where <span class="blank blank--aud"><label class="sr" for="pAudience">Audience size (optional)</label><select id="pAudience" name="audience">
+                  <option value="" selected>a growing number of</option>
+                  <option value="lt10k">under 10K</option>
+                  <option value="10k-100k">10K–100K</option>
+                  <option value="100k-1m">100K–1M</option>
+                  <option value="gt1m">over 1M</option>
+                </select></span> people follow along.</p>
+            </div>
+            <div class="step" data-step="3" inert>
+              <p class="line" id="chapterLbl">The next chapter I want to open is</p>
+              <div class="field field--area"><textarea id="pChapter" name="chapter" rows="2" aria-labelledby="chapterLbl" placeholder="a few words, if you like…"></textarea></div>
+              <p class="line line--note">Optional. Skip it if it’s still taking shape.</p>
+            </div>
+            <div class="step" data-step="4" inert>
+              <p class="line">You can reach me at</p>
+              <div class="field"><label class="sr" for="pEmail">Email</label><input id="pEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required pattern="[^@\s]+@[^@\s]+\.[^@\s]{2,}" spellcheck="false"></div>
+              <p class="line line--note"><label class="agree" id="agreeRow"><input id="pAgree" name="agree" type="checkbox" required> I agree to the use of my information for application review.</label></p>
+            </div>
+            <p class="q-error" id="qError" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="signed" id="signed" role="status" aria-live="polite">
+            <svg class="sig" viewBox="0 0 560 170" role="img" aria-label="Join Ludyte"><text class="sig-text" x="280" y="118" text-anchor="middle">Join Ludyte</text></svg>
+            <span class="sig-line" aria-hidden="true"></span>
+            <p class="sig-caption" id="sigCaption"><span id="capName">&nbsp;</span><span id="capRole">Founding Explorer</span><span id="capDate">&nbsp;</span></p>
+            <p class="sig-thanks" id="sigThanks"><span>Thank you for standing with us.</span><span>We’ll review your application and follow up by email.</span></p>
+          </div>
+        </div>
+
+        <div class="pledge-foot">
+          <button class="back-btn is-hidden" type="button" id="backBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back</button>
+          <div class="foot-right">
+            <div class="foot-actions">
+              <button class="next-btn" type="button" id="nextBtn"><span id="nextLabel">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+              <button class="send is-hidden" type="submit" id="sendBtn">Sign &amp; send <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="seal" aria-hidden="true">
+          <svg viewBox="0 0 200 200">
+            <defs>
+              <path id="sealTop" d="M32.5,100 A67.5,67.5 0 0,1 167.5,100"/>
+              <path id="sealBot" d="M20.5,100 A79.5,79.5 0 0,0 179.5,100"/>
+              <!-- 빈티지 고무 도장: 가장자리 잉크 번짐(흐림→문턱) · 드문 잉크 빠짐 · 종이 결 · 누른 힘의 차이 -->
+              <filter id="stampInk" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+                <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="edge"/>
+                <feDisplacementMap in="SourceGraphic" in2="edge" scale="2" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+                <feGaussianBlur in="rough" stdDeviation=".65" result="blur"/>
+                <feComponentTransfer in="blur" result="ink"><feFuncA type="linear" slope="7" intercept="-2.7"/></feComponentTransfer>
+                <feTurbulence type="fractalNoise" baseFrequency=".28" numOctaves="3" seed="12" result="spk"/>
+                <feColorMatrix in="spk" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -22 0 0 0 16.6" result="spkA"/>
+                <feComposite in="ink" in2="spkA" operator="in" result="speckled"/>
+                <feTurbulence type="fractalNoise" baseFrequency="2.4" numOctaves="1" seed="9" result="grain"/>
+                <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -14 0 0 0 10.9" result="grainA"/>
+                <feComposite in="speckled" in2="grainA" operator="in" result="grained"/>
+                <feTurbulence type="fractalNoise" baseFrequency=".02" numOctaves="2" seed="21" result="press"/>
+                <feColorMatrix in="press" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.4 0 0 0 .25" result="pressA"/>
+                <feComposite in="grained" in2="pressA" operator="in"/>
+              </filter>
+            </defs>
+            <g filter="url(#stampInk)" fill="currentColor">
+              <circle cx="100" cy="100" r="95" fill="none" stroke="currentColor" stroke-width="5.5"/>
+              <circle cx="100" cy="100" r="89" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 3.2"/>
+              <circle cx="100" cy="100" r="58.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4.4 3"/>
+              <circle cx="100" cy="100" r="54" fill="none" stroke="currentColor" stroke-width="3"/>
+              <text font-family="'Fraunces',Georgia,serif" font-weight="800" font-size="13.6" style="font-variation-settings:'SOFT' 100,'opsz' 72"><textPath href="#sealTop" startOffset="50%" text-anchor="middle" textLength="168" lengthAdjust="spacing"><tspan rotate="-0.1 0.7 -1.9 0.9 0.6 2.2 1.4 -0.9 -0.5 0.7 -2.1 -0.2 -1.5 -1.7 -1.9 1.2 -1.6" dy="-0.25 -0.11 0.37 -0.42 -0.05 0.05 0.38 0.32 0.36 -0.22 -0.08 -0.14 0.38 0.46 -0.35 -0.32 -0.27">FOUNDING&#160; EXPLORER</tspan></textPath></text>
+              <text font-family="'Fraunces',Georgia,serif" font-weight="800" font-size="13.6" style="font-variation-settings:'SOFT' 100,'opsz' 72"><textPath href="#sealBot" startOffset="50%" text-anchor="middle" textLength="182" lengthAdjust="spacing"><tspan rotate="-1.2 -0.1 0.4 -1.0 -2.2 -0.4 -0.6 0.3 2.0 0.8 0.1 0.5 0.8 -2.0 1.8 1.2 1.6" dy="0.3 -0.11 -0.1 -0.4 0.13 -0.44 -0.43 -0.29 -0.34 -0.16 -0.45 -0.5 -0.35 -0.4 -0.14 -0.47 0.37">LUDYTE&#160; EXPEDITION</tspan></textPath></text>
+              <circle cx="27" cy="100" r="3.3"/>
+              <circle cx="173" cy="100" r="3.3"/>
+              <g transform="translate(100 99) scale(2.85) translate(-10.8 -10)"><path d="M8.97952 0.00201176C10.8691 -0.03377 12.7765 0.409992 14.5108 1.15533C14.9023 1.32342 15.288 1.50425 15.6465 1.73443C15.902 1.89811 16.1555 2.03368 16.333 2.2901C16.4792 2.50141 16.5273 2.80738 16.5928 3.05279C16.7143 3.5071 16.8678 3.95298 16.9893 4.40729C17.0362 4.582 17.0857 4.75641 17.1397 4.92877C17.1586 4.98987 17.165 5.07796 17.2041 5.12994C17.2367 5.17248 17.3054 5.18211 17.3526 5.19928C17.4567 5.23704 17.5587 5.28352 17.6621 5.3233C18.0197 5.46103 18.3743 5.63718 18.7119 5.81744C19.3924 6.18058 20.0712 6.58374 20.6221 7.12604C20.8567 7.35693 21.1038 7.60109 21.2696 7.88971C21.3816 8.08514 21.4767 8.29172 21.5293 8.50201V8.50299C21.5732 8.64004 21.5855 8.85371 21.5791 9.00494C21.5724 9.17064 21.5389 9.3414 21.4619 9.49225C21.2138 9.97848 20.4242 10.9671 17.9463 11.9268L17.6934 14.7891L13.7198 20.001L4.30471 14.5665L4.03811 10.8546C1.78908 9.82771 0.954125 8.836 0.954125 8.836C0.76781 8.64093 0.595919 8.43071 0.44436 8.20123C0.0821063 7.65269 -0.110139 7.00661 0.0664299 6.35748C0.156282 6.02693 0.357195 5.78144 0.548852 5.50885C0.782139 5.17669 1.16261 4.90582 1.50393 4.69146C2.22529 4.23853 3.0434 3.91772 3.87209 3.72564C4.18607 3.65307 4.50171 3.58663 4.81838 3.53229C4.92101 3.51473 5.02404 3.50277 5.126 3.4815C5.15872 3.47482 5.20122 3.48087 5.22952 3.461C5.27302 3.43022 5.29585 3.32595 5.31643 3.27838C5.38757 3.11311 5.44482 2.94168 5.51565 2.77643C5.68541 2.38059 5.85097 1.98009 6.00588 1.57818C6.10138 1.32951 6.18441 1.05557 6.32913 0.830137C6.53439 0.510127 6.85884 0.365325 7.21096 0.254941C7.77518 0.0778616 8.38899 0.0131747 8.97952 0.00201176ZM8.72854 12.046C9.17871 12.8289 9.95861 13.2649 10.8477 13.3633C11.2067 13.4031 11.5806 13.3415 11.9258 13.2481C12.3315 13.1382 12.7326 12.9296 13.0645 12.6544C11.6141 12.5786 10.1002 12.3356 8.72854 12.046ZM16.9317 12.2881C16.3518 12.4755 15.702 12.5841 15.0108 12.6378C15.2217 12.843 15.4881 12.9856 15.8047 13.0206C15.9917 13.0412 16.1898 13.0192 16.3711 12.9747C16.7419 12.8832 17.0324 12.6624 17.2949 12.3946C17.3584 12.3301 17.4172 12.2476 17.4658 12.171C17.4767 12.1541 17.5029 12.1159 17.5108 12.0909C17.3263 12.1568 17.1332 12.223 16.9317 12.2881ZM4.8135 4.68756C4.77029 4.68722 4.69681 4.84258 4.67385 4.87701C4.53985 5.07783 4.4303 5.27334 4.42288 5.50689C4.41955 5.60626 4.43973 5.70489 4.4717 5.79889C4.57598 6.10392 4.79683 6.35442 5.03811 6.56939C5.48983 6.97143 5.99984 7.28028 6.53225 7.56451C6.97483 7.80045 7.44248 7.98848 7.91409 8.15826C9.41237 8.69767 10.9605 8.95404 12.5459 8.97564C12.9732 8.98171 13.4032 8.97401 13.8281 8.919C14.0337 8.89235 14.2451 8.90045 14.4473 8.85455C14.6599 8.80631 14.884 8.79948 15.0987 8.75494C15.6964 8.63085 16.2932 8.47978 16.8418 8.20904L17.0733 8.086C17.4752 7.85548 17.8469 7.51487 17.7373 7.00201C17.6931 6.79644 17.6178 6.58958 17.5547 6.38873C17.5436 6.35327 17.5225 6.21564 17.4844 6.20416C17.4591 6.19724 17.3798 6.28659 17.3623 6.30475C17.2608 6.41086 17.1357 6.49567 17.0137 6.57623C16.5753 6.86568 16.0214 7.00781 15.5196 7.13873C14.9576 7.28519 14.3844 7.33988 13.8086 7.39557C12.7975 7.49312 11.7636 7.44219 10.7569 7.294C9.24919 7.07221 7.72685 6.62118 6.38088 5.8985C5.95764 5.67136 5.54338 5.41633 5.18459 5.09674C5.08677 5.00969 4.99205 4.90638 4.91311 4.80182C4.89414 4.77625 4.84847 4.6883 4.8135 4.68756Z"/></g>
+            </g>
+          </svg>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+<script>
+(function(){
+  const form=document.getElementById('sheet'), sheet=form;
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  function holder(el){ return el.closest('.field')||el.closest('.blank')||el.closest('.agree'); }
+  function clear(el){ const h=holder(el); if(h) h.classList.remove('is-missing'); }
+
+  const urlEl=document.getElementById('pUrl');
+  function fixUrl(){ const v=urlEl.value.trim(); if(v && !/^[a-z][a-z0-9+.-]*:\/\//i.test(v)) urlEl.value='https://'+v.replace(/^\/+/,''); }
+  urlEl.addEventListener('blur',fixUrl);
+
+  const steps=[...form.querySelectorAll('.step')], dots=[...document.querySelectorAll('#progress li')];
+  const errEl=document.getElementById('qError');
+  const backBtn=document.getElementById('backBtn'), nextBtn=document.getElementById('nextBtn'), nextLabel=document.getElementById('nextLabel'), sendBtn=document.getElementById('sendBtn');
+  const nameEl=document.getElementById('pName'), chapterEl=document.getElementById('pChapter'), emailEl=document.getElementById('pEmail'), agreeEl=document.getElementById('pAgree');
+  const reduceMq=matchMedia('(prefers-reduced-motion: reduce)');
+  let cur=0, busy=false, signing=false;
+
+  function setError(t){ errEl.textContent=t||''; }
+  function validate(i){
+    if(i===1) fixUrl();
+    const req=[...steps[i].querySelectorAll('[required]')];
+    const bad=req.find(function(el){ const ok=el.type==='checkbox'?el.checked:el.checkValidity(); holder(el).classList.toggle('is-missing',!ok); return !ok; });
+    if(!bad){ setError(''); return true; }
+    const msgs={pName:'Add your name or team.',pUrl:urlEl.value?'That link doesn’t look right.':'Add your channel link.',pEmail:emailEl.value?'That email doesn’t look right.':'Add an email so we can reach you.',pAgree:'Please agree to the review terms.'};
+    setError(msgs[bad.id]||'Fill in the blank.'); const h=holder(bad); h.classList.remove('is-nudge'); void h.offsetWidth; h.classList.add('is-nudge'); bad.focus({preventScroll:true}); return false;
+  }
+  function render(){
+    dots.forEach(function(d,k){ d.classList.toggle('is-done',k<cur); d.classList.toggle('is-now',k===cur); });
+    backBtn.classList.toggle('is-hidden',cur===0);
+    const last=cur===steps.length-1;
+    nextBtn.classList.toggle('is-hidden',last); sendBtn.classList.toggle('is-hidden',!last);
+    nextBtn.tabIndex=last?-1:0; sendBtn.tabIndex=last?0:-1;
+    nextLabel.textContent=(cur===2&&!chapterEl.value.trim())?'Skip':'Next';
+  }
+  function show(i){
+    steps.forEach(function(st,k){ st.classList.toggle('is-current',k===i); st.classList.remove('is-leaving'); if(k===i) st.removeAttribute('inert'); else st.setAttribute('inert',''); });
+    cur=i; render(); setError('');
+    const f=steps[i].querySelector('input,select,textarea');
+    if(f) setTimeout(function(){ f.focus({preventScroll:true}); }, 40);
+  }
+  function go(to){
+    if(busy||signing) return;
+    busy=true;
+    steps[cur].classList.add('is-leaving');
+    setTimeout(function(){ show(to); busy=false; }, reduceMq.matches?0:240);
+  }
+  function next(){
+    if(busy||signing) return;
+    if(cur===steps.length-1){ form.requestSubmit(); return; }
+    if(!validate(cur)) return;
+    go(cur+1);
+  }
+  function back(){ if(cur>0) go(cur-1); }
+
+  nextBtn.addEventListener('click',next);
+  backBtn.addEventListener('click',back);
+  chapterEl.addEventListener('input',function(){ if(cur===2) nextLabel.textContent=chapterEl.value.trim()?'Next':'Skip'; });
+  form.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'||e.isComposing) return;
+    if(e.target.tagName==='TEXTAREA'){ if(e.metaKey||e.ctrlKey){ e.preventDefault(); next(); } return; }
+    if(e.target.tagName==='BUTTON') return;
+    e.preventDefault(); next();
+  });
+  [nameEl,urlEl,emailEl].forEach(function(el){ el.addEventListener('input',function(){ clear(el); setError(''); }); });
+  agreeEl.addEventListener('change',function(){ clear(agreeEl); setError(''); });
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    if(signing||busy) return;
+    if(!validate(steps.length-1)) return;
+    signing=true;
+    sign();
+  });
+
+  function wait(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+  const apply=document.querySelector('.apply'), inner=document.querySelector('.apply__inner'), wrap=document.querySelector('.sheet-wrap'), story=document.querySelector('.apply__story');
+  function measureShift(){
+    /* 변환을 끈 상태에서 측정: 가로는 컨테이너 가운데까지, 세로는 (한 단 배치일 때) 사라진 소개 문구 자리까지 */
+    const keepT=wrap.style.transition; wrap.style.transition='none'; wrap.style.translate='0px 0px';
+    const ir=inner.getBoundingClientRect(), wr=wrap.getBoundingClientRect();
+    const dx=(ir.left+ir.width/2)-(wr.left+wr.width/2);
+    /* 세로는 offsetTop(변환 영향 없음)으로: 소개 문구가 종이 위에 쌓인 배치(태블릿·모바일)일 때만 */
+    const stacked=story.offsetTop+story.offsetHeight<=wrap.offsetTop+1;
+    const dy=stacked?wrap.offsetTop-story.offsetTop:0;
+    wrap.getBoundingClientRect();
+    wrap.style.transition=keepT;
+    return {dx:Math.abs(dx)>4?Math.round(dx):0, dy:dy};
+  }
+  function centerSheet(){
+    if(!apply.classList.contains('is-focus')) return {dx:0,dy:0};
+    const m=measureShift();
+    wrap.style.translate=m.dx+'px '+(-m.dy)+'px';            /* 종이가 가운데로, 또는 비워진 위 공간으로 올라옴 */
+    return m;
+  }
+  function animateScroll(to,dur){
+    const from=scrollY, d=to-from;
+    if(Math.abs(d)<2||!dur){ scrollTo({top:to,behavior:'instant'}); return; }
+    const t0=performance.now();
+    (function step(now){ const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3); scrollTo({top:from+d*e,behavior:'instant'}); if(p<1) requestAnimationFrame(step); })(t0);
+  }
+  /* 스크롤은 한 번뿐. 종이가 옮겨 갈 최종 위치를 기준으로 목표를 미리 계산 */
+  function focusSheet(){
+    const barH=document.querySelector('.xp-bar').offsetHeight;
+    /* 옮기기 전 위치(변환 없음)를 먼저 잼 */
+    const keepT=wrap.style.transition; wrap.style.transition='none'; wrap.style.translate='0px 0px';
+    const sh=sheet.getBoundingClientRect(), sg=document.getElementById('signed').getBoundingClientRect();
+    wrap.getBoundingClientRect(); wrap.style.transition=keepT;
+    apply.classList.add('is-focus');
+    const m=measureShift();
+    const avail=innerHeight-barH-16, sheetTop=sh.top+scrollY-m.dy, bottom=sh.bottom+scrollY-m.dy, sigTop=sg.top+scrollY-m.dy;
+    let target;
+    if(bottom-sheetTop<=avail) target=sheetTop-barH-8-(avail-(bottom-sheetTop))/2;   /* 종이 전체가 들어가면 종이를 가운데 */
+    else if(bottom-sigTop<=avail) target=bottom-innerHeight+16;                        /* 서명~인장까지 들어가면 종이 아래 끝에 맞춤 */
+    else target=sigTop-barH-12;                                                          /* 낮은 가로 화면: 서명이 써지는 곳부터 */
+    target=Math.max(target, apply.getBoundingClientRect().top+scrollY-barH);            /* 신청 섹션 위(히어로)는 화면에 들어오지 않게 */
+    target=Math.max(0,Math.min(target,document.documentElement.scrollHeight-innerHeight));
+    /* 종이 이동과 스크롤을 한 프레임 루프·한 곡선으로 함께 움직임 → 화면에서 종이가 한 방향으로만 미끄러짐 */
+    const from=scrollY, d=Math.round(target)-from, dur=reduceMq.matches?0:900, t0=performance.now();
+    wrap.style.transition='none';
+    (function step(now){
+      const p=dur?Math.min(1,(now-t0)/dur):1, e=1-Math.pow(1-p,3);
+      const sy=Math.round(from+d*e);                              /* 스크롤은 정수 픽셀 */
+      wrap.style.translate=(m.dx*e)+'px '+(-m.dy*e-(from+d*e-sy))+'px';   /* 반올림 오차는 종이 이동이 흡수 */
+      scrollTo({top:sy,behavior:'instant'});
+      if(p<1) requestAnimationFrame(step);
+    })(t0);
+  }
+  addEventListener('resize',function(){ if(apply.classList.contains('is-focus')) centerSheet(); });
+
+  async function sign(){
+    const name=nameEl.value.trim(), reduce=reduceMq.matches, signed=document.getElementById('signed');
+    document.getElementById('capName').textContent=name; document.getElementById('capDate').textContent=today;
+    const fontReady=document.fonts?Promise.all([document.fonts.load('118px "Mrs Saint Delafield"'),document.fonts.load('800 16px "Fraunces"')]).catch(function(){}):Promise.resolve();
+    focusSheet();
+    sheet.classList.add('is-signing');                       /* 질문·버튼이 제자리에서 사라짐 */
+    await wait(reduce?0:500);
+    document.getElementById('stage').classList.add('is-gone');
+    document.querySelector('.pledge-foot').classList.add('is-gone');
+    [...form.elements].forEach(function(el){ el.tabIndex=-1; });
+    signed.classList.add('show');
+    await fontReady;
+    await wait(reduce?0:450);
+    signed.classList.add('line'); await wait(reduce?0:700);   /* 서명선 */
+    signed.classList.add('draw'); await wait(reduce?0:2500);  /* "Join Ludyte" */
+    signed.classList.add('caption'); await wait(reduce?0:700);
+    sheet.classList.add('sealed');                             /* 인장 */
+    apply.classList.add('is-done');
+  }
+})();
+</script>
+</body>
+</html>
