@@ -400,6 +400,13 @@
   .pl-sig-thanks{margin:12px 0 0;font-family:var(--font-doc);font-size:21px;line-height:1.4;color:var(--paper-fg);text-wrap:balance;opacity:0;translate:0 6px;transition:opacity .8s var(--ease) .15s,translate .8s var(--ease) .15s}
   .pl-sig-thanks>span{display:block;white-space:nowrap}
   .pl-sig-caption>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* 위계: 서명 → 이름(크게) → 직함(작게). 날짜는 종이 왼쪽 아래, 오른쪽 아래 도장과 짝 */
+  .pl-sig-caption{gap:6px}
+  .pl-sig-caption .pl-sig-name{font:400 30px/1.1 var(--font-doc);letter-spacing:0;text-transform:none;color:var(--paper-fg)}
+  .pl-sig-date{position:absolute;left:60px;bottom:52px;display:grid;gap:5px;margin:0;opacity:0;transition:opacity .8s var(--ease)}
+  .pl-sig-date__lbl{font:700 10px/1 var(--font-latin);letter-spacing:.18em;text-transform:uppercase;color:var(--paper-muted)}
+  .pl-sig-date__val{font:400 17px/1.2 var(--font-doc);color:var(--paper-fg);white-space:nowrap}
+  .pl-sheet.sealed .pl-sig-date{opacity:1}
   .pl-signed.caption .pl-sig-caption,.pl-signed.caption .pl-sig-thanks{opacity:1;translate:0 0}
 
   .pl-seal{position:absolute;right:38px;bottom:26px;width:126px;height:126px;color:var(--brand-red);mix-blend-mode:multiply;opacity:0;scale:1.9;rotate:-24deg;pointer-events:none}
@@ -420,6 +427,9 @@
     .pl-field--area textarea{font-size:19px}
     .pl-sig-thanks{font-size:min(16px,4.15vw)}   /* 좁은 폰에서도 두 줄 유지 */
     .pl-seal{width:96px;height:96px;right:16px;bottom:18px}
+    .pl-sig-caption .pl-sig-name{font-size:min(25px,7vw)}
+    .pl-sig-date{left:24px;bottom:34px}
+    .pl-sig-date__val{font-size:15px}
   }
   /* 터치 기기: 빈칸의 터치 영역만 위로 넓힘 */
   @media (hover:none){
@@ -585,7 +595,7 @@
           <div class="pl-signed" id="plSigned" role="status" aria-live="polite">
             <svg class="pl-sig" viewBox="0 0 560 170" role="img" aria-label="Join Ludyte"><text class="pl-sig-text" x="280" y="118" text-anchor="middle">Join Ludyte</text></svg>
             <span class="pl-sig-line" aria-hidden="true"></span>
-            <p class="pl-sig-caption" id="sigCaption"><span id="capName">&nbsp;</span><span id="capRole">Founding Explorer</span><span id="capDate">&nbsp;</span></p>
+            <p class="pl-sig-caption" id="sigCaption"><span class="pl-sig-name" id="capName">&nbsp;</span><span id="capRole">Founding Explorer</span></p>
             <p class="pl-sig-thanks" id="sigThanks"><span>Thank you for standing with us.</span><span>We’ll review your application and follow up by email.</span></p>
           </div>
         </div>
@@ -600,6 +610,7 @@
           </div>
         </div>
 
+        <p class="pl-sig-date"><span class="pl-sig-date__lbl">Signed</span><span class="pl-sig-date__val" id="capDate">&nbsp;</span></p>
         <div class="pl-seal" aria-hidden="true">
           <svg viewBox="0 0 200 200">
             <defs>

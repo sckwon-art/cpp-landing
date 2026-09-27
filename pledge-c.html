@@ -140,6 +140,13 @@
   .sig-thanks{margin:12px 0 0;font-family:var(--font-doc);font-size:21px;line-height:1.4;color:var(--paper-fg);text-wrap:balance;opacity:0;translate:0 6px;transition:opacity .8s var(--ease) .15s,translate .8s var(--ease) .15s}
   .sig-thanks>span{display:block;white-space:nowrap}
   .sig-caption>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* 위계: 서명 → 이름(크게) → 직함(작게). 날짜는 종이 왼쪽 아래, 오른쪽 아래 도장과 짝 */
+  .sig-caption{gap:6px}
+  .sig-caption .sig-name{font:400 30px/1.1 var(--font-doc);letter-spacing:0;text-transform:none;color:var(--paper-fg)}
+  .sig-date{position:absolute;left:60px;bottom:52px;display:grid;gap:5px;margin:0;opacity:0;transition:opacity .8s var(--ease)}
+  .sig-date__lbl{font:700 10px/1 var(--font-latin);letter-spacing:.18em;text-transform:uppercase;color:var(--paper-muted)}
+  .sig-date__val{font:400 17px/1.2 var(--font-doc);color:var(--paper-fg);white-space:nowrap}
+  .sheet.sealed .sig-date{opacity:1}
   .signed.caption .sig-caption,.signed.caption .sig-thanks{opacity:1;translate:0 0}
 
   .seal{position:absolute;right:38px;bottom:26px;width:126px;height:126px;color:var(--brand-red);mix-blend-mode:multiply;opacity:0;scale:1.9;rotate:-24deg;pointer-events:none}
@@ -167,6 +174,9 @@
     .field--area textarea{font-size:19px}
     .sig-thanks{font-size:min(16px,4.15vw)}   /* 좁은 폰에서도 두 줄 유지 */
     .seal{width:96px;height:96px;right:16px;bottom:18px}
+    .sig-caption .sig-name{font-size:min(25px,7vw)}
+    .sig-date{left:24px;bottom:34px}
+    .sig-date__val{font-size:15px}
   }
   /* 터치 기기: 빈칸의 터치 영역만 위로 넓힘 */
   @media (hover:none){
@@ -238,7 +248,7 @@
           <div class="signed" id="signed" role="status" aria-live="polite">
             <svg class="sig" viewBox="0 0 560 170" role="img" aria-label="Join Ludyte"><text class="sig-text" x="280" y="118" text-anchor="middle">Join Ludyte</text></svg>
             <span class="sig-line" aria-hidden="true"></span>
-            <p class="sig-caption" id="sigCaption"><span id="capName">&nbsp;</span><span id="capRole">Founding Explorer</span><span id="capDate">&nbsp;</span></p>
+            <p class="sig-caption" id="sigCaption"><span class="sig-name" id="capName">&nbsp;</span><span id="capRole">Founding Explorer</span></p>
             <p class="sig-thanks" id="sigThanks"><span>Thank you for standing with us.</span><span>We’ll review your application and follow up by email.</span></p>
           </div>
         </div>
@@ -253,6 +263,7 @@
           </div>
         </div>
 
+        <p class="sig-date"><span class="sig-date__lbl">Signed</span><span class="sig-date__val" id="capDate">&nbsp;</span></p>
         <div class="seal" aria-hidden="true">
           <svg viewBox="0 0 200 200">
             <defs>
