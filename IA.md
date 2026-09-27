@@ -111,7 +111,7 @@ Figma는 데스크톱만 정의되어 있어 태블릿·모바일은 좌측 여�
 
 ---
 
-## 6. 신청 페이지 `join.html` (CTA 이동처)
+## 6. 신청 페이지 `join.html` (현재 미사용 — 신청은 메인 index.html 히어로 아래 서약서형 섹션 #apply 에서 받음)
 
 Figma "Ludyte CPP — Strategy / Landing Explorations" › `01 · The Invitation`(node 59:370)을 랜딩 톤앤매너로 워싱한 별도 페이지. 상단 `Join the expedition`과 엔딩 `Become a First Ally`가 모두 여기로 이동한다.
 
