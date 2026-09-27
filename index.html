@@ -1056,7 +1056,16 @@
 
   /* CTA → 폼으로 앵커 이동 (주소창에 #apply 남기지 않음) */
   document.querySelectorAll('a[href="#apply"]').forEach(function(a){
-    a.addEventListener('click',function(e){ e.preventDefault(); document.getElementById('apply').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}); });
+    a.addEventListener('click',function(e){
+      e.preventDefault();
+      /* 신청 섹션 맨 위로 가되, 종이 전체가 한 화면에 들어오도록(소개 문구가 위에 쌓이는 태블릿·모바일) 필요한 만큼 더 내림 */
+      const ap=document.getElementById('apply'), sh=document.querySelector('.pl-sheet'), navH=nav.offsetHeight;
+      const top=ap.getBoundingClientRect().top+scrollY, r=sh.getBoundingClientRect(), sTop=r.top+scrollY, sBot=r.bottom+scrollY;
+      let target=top;
+      if(sBot-target>innerHeight-16) target=sBot-innerHeight+16;
+      target=Math.min(target,sTop-navH-12);
+      scrollTo({top:Math.max(0,target),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    });
   });
   document.querySelector('.land-nav__brand').addEventListener('click',function(e){ e.preventDefault(); scrollTo({top:0,behavior:'smooth'}); });
 
