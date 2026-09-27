@@ -42,7 +42,7 @@
 
   /* 섹션 레이아웃 */
   .apply{padding:clamp(56px,9vh,110px) 80px clamp(72px,12vh,140px);background:linear-gradient(180deg,rgba(140,112,118,.10) 0,rgba(140,112,118,0) 240px),var(--ink)}
-  .apply__inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,660px);gap:clamp(32px,5vw,72px);align-items:start;max-width:1280px;margin:0 auto}
+  .apply__inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,540px);gap:clamp(32px,5vw,72px);align-items:start;max-width:1280px;margin:0 auto}
   .apply__story{display:grid;gap:18px;max-width:560px;padding-top:40px;position:sticky;top:112px}
   .apply__eyebrow{margin:0;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .apply__title{margin:0;font-family:var(--font-title);font-weight:700;font-size:clamp(40px,3.9vw,72px);line-height:1.04;letter-spacing:-.01em;text-wrap:balance}
@@ -130,10 +130,8 @@
   .signed{display:grid;justify-items:center;align-self:center;gap:10px;text-align:center;visibility:hidden}
   .signed.show{visibility:visible}
   .signed svg.sig{display:block;width:min(100%,420px);height:auto;overflow:visible}
-  .sig-text{font-family:var(--font-sign);font-size:118px;fill:transparent;stroke:var(--pen);stroke-width:1.2;stroke-linejoin:round;stroke-dasharray:2600;stroke-dashoffset:2600}
-  .signed.draw .sig-text{animation:sig-draw 2.4s cubic-bezier(.45,.05,.35,1) forwards, sig-fill .7s ease 2s forwards}
-  @keyframes sig-draw{to{stroke-dashoffset:0}}
-  @keyframes sig-fill{to{fill:var(--pen);stroke-width:.4}}
+  .sig-text{font-family:var(--font-sign);font-size:118px;fill:var(--pen)}
+  /* 서명: 글씨는 처음부터 잉크(채움). 필기 기울기로 비스듬한 부드러운 경계가 좌→우 한 흐름으로 지나가며 드러냄 (JS: drawSignature) */
   .sig-line{width:min(100%,400px);height:1.5px;background:var(--paper-fg);opacity:.7;transform:scaleX(0);transform-origin:left center;transition:transform .8s var(--ease)}
   .signed.line .sig-line{transform:scaleX(1)}
   .sig-caption{display:grid;width:100%;margin:4px 0 0;font:700 11px/1.5 var(--font-latin);letter-spacing:.16em;text-transform:uppercase;color:var(--paper-muted);opacity:0;translate:0 6px;transition:opacity .8s var(--ease),translate .8s var(--ease)}
@@ -143,10 +141,13 @@
   /* 위계: 서명 → 이름(크게) → 직함(작게). 날짜는 종이 왼쪽 아래, 오른쪽 아래 도장과 짝 */
   .sig-caption{gap:6px}
   .sig-caption .sig-name{font:400 30px/1.1 var(--font-doc);letter-spacing:0;text-transform:none;color:var(--paper-fg)}
-  .sig-date{position:absolute;left:60px;bottom:52px;display:grid;gap:5px;margin:0;opacity:0;transition:opacity .8s var(--ease)}
-  .sig-date__lbl{font:700 10px/1 var(--font-latin);letter-spacing:.18em;text-transform:uppercase;color:var(--paper-muted)}
+  .sheet__head{position:relative}
+  .progress{transition:opacity .4s var(--ease)}
+  .sheet.is-signing .progress{opacity:0}
+  .sig-date{position:absolute;right:0;bottom:18px;display:grid;gap:5px;margin:0;text-align:right;opacity:0;transition:opacity .8s var(--ease)}
+  .sig-date__lbl{font:700 11px/1 var(--font-latin);letter-spacing:.18em;text-transform:uppercase;color:var(--paper-muted)}
   .sig-date__val{font:400 17px/1.2 var(--font-doc);color:var(--paper-fg);white-space:nowrap}
-  .sheet.sealed .sig-date{opacity:1}
+  .sheet.is-captioned .sig-date{opacity:1}
   .signed.caption .sig-caption,.signed.caption .sig-thanks{opacity:1;translate:0 0}
 
   .seal{position:absolute;right:38px;bottom:26px;width:126px;height:126px;color:var(--brand-red);mix-blend-mode:multiply;opacity:0;scale:1.9;rotate:-24deg;pointer-events:none}
@@ -161,21 +162,43 @@
     .apply__inner{grid-template-columns:1fr;gap:32px}
     .apply__story{position:static;padding-top:0}
   }
-  @media (max-width:599px){
-    .sheet{height:580px;padding:34px 24px 30px}
-    .sheet__title{font-size:26px}
-    .progress li{width:12px}
-    .line{font-size:20px;white-space:normal}
-    .stage>.step{grid-template-rows:minmax(38px,1fr) 52px minmax(38px,1fr)}
-    .stage>.step[data-step="3"]{grid-template-rows:minmax(38px,1fr) 84px minmax(38px,1fr)}
-    .line{line-height:32px}
-    .field input{height:48px;font-size:25px}
-    .blank select{font-size:20px}
-    .field--area textarea{font-size:19px}
-    .sig-thanks{font-size:min(16px,4.15vw)}   /* 좁은 폰에서도 두 줄 유지 */
-    .seal{width:96px;height:96px;right:16px;bottom:18px}
-    .sig-caption .sig-name{font-size:min(25px,7vw)}
-    .sig-date{left:24px;bottom:34px}
+  /* ===== 3:4 종이: 모든 기기에서 같은 비율·같은 구성, 크기만 다름 =====
+     폭은 최대 540px, 화면 높이가 낮으면 한 화면에 들어오도록 줄어듦. 글자·여백은 종이 폭(cqw)에 비례 */
+  .sheet-wrap{container-type:inline-size;width:clamp(min(100%,320px), calc((100svh - 64px - 56px) * .75), min(100%,540px))}
+  .sheet{aspect-ratio:3/4;height:auto;
+    --fs-line:clamp(18px,4.45cqw,24px); --lh:clamp(30px,7.8cqw,42px); --fs-in:clamp(22px,5.6cqw,30px); --pad-x:clamp(22px,8.9cqw,48px);
+    padding:clamp(24px,8.1cqw,44px) var(--pad-x) clamp(20px,7.4cqw,40px)}
+  .sheet__head{padding-bottom:clamp(10px,3cqw,18px)}
+  .sheet__title{font-size:clamp(22px,6cqw,32px)}
+  .progress li{width:clamp(12px,3.3cqw,18px)}
+  .line{font-size:var(--fs-line);line-height:var(--lh);white-space:normal;text-wrap:balance}
+  .stage>.step{grid-template-rows:minmax(var(--lh),1fr) calc(var(--lh) * 1.3) minmax(var(--lh),1fr)}
+  .stage>.step[data-step="3"]{grid-template-rows:minmax(var(--lh),1fr) calc(var(--lh) * 2) minmax(var(--lh),1fr)}
+  .field input{height:calc(var(--lh) * 1.25);font-size:var(--fs-in)}
+  .blank select{font-size:var(--fs-line)}
+  .field--area textarea{height:calc(var(--lh) * 2);font-size:calc(var(--fs-line) * .92);line-height:var(--lh);
+    background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--lh) - 1px),var(--paper-rule) calc(var(--lh) - 1px),var(--paper-rule) var(--lh))}
+  .q-error{font-size:clamp(15px,3.2cqw,17px)}
+  .agree{font-size:clamp(12px,2.5cqw,13px)}
+  .signed svg.sig{width:min(100%,78cqw)}
+  .sig-line{width:min(100%,74cqw)}
+  .sig-caption .sig-name{font-size:clamp(22px,5.6cqw,30px)}
+  .sig-thanks{font-size:clamp(13px,4.7cqw,21px)}      /* 어느 폭에서도 두 줄 유지 */
+  .seal{width:clamp(80px,23cqw,124px);height:clamp(80px,23cqw,124px);right:clamp(14px,6.5cqw,36px);bottom:clamp(14px,5cqw,28px)}
+  .sig-date{bottom:clamp(10px,3cqw,18px)}
+  /* 좁은 종이(휴대폰): 제목 옆에 날짜가 들어갈 자리가 없으므로 왼쪽 아래(도장과 짝) */
+  /* 아주 좁은 종이(320 폭 폰): 글자·도장을 한 단계 줄여 3:4 안에 여유 있게 */
+  @container (max-width:300px){
+    .sheet{--fs-line:16px;--lh:26px;--fs-in:20px}
+    .sheet__title{font-size:20px}
+    .seal{width:66px;height:66px}
+    .q-error{margin-top:2px}
+    .stage>.step{row-gap:0}
+    .sig-caption .sig-name{font-size:20px}
+  }
+  @container (max-width:460px){
+    .sheet__head{position:static}
+    .sig-date{left:var(--pad-x);right:auto;bottom:clamp(22px,7cqw,34px);text-align:left}
     .sig-date__val{font-size:15px}
   }
   /* 터치 기기: 빈칸의 터치 영역만 위로 넓힘 */
@@ -212,6 +235,7 @@
         <header class="sheet__head">
           <h2 class="sheet__title" id="pledgeTitle">Join the expedition</h2>
           <ol class="progress" id="progress" aria-hidden="true"><li></li><li></li><li></li><li></li></ol>
+          <p class="sig-date"><span class="sig-date__lbl">Signed</span><span class="sig-date__val" id="capDate">&nbsp;</span></p>
         </header>
 
         <div class="center">
@@ -223,7 +247,7 @@
             </div>
             <div class="step" data-step="2" inert>
               <p class="line">My work lives at</p>
-              <div class="field"><label class="sr" for="pUrl">Primary channel URL</label><input id="pUrl" name="url" type="url" inputmode="url" placeholder="https://" required pattern="https?:\/\/[^\s\/]+\.[^\s]+" spellcheck="false"></div>
+              <div class="field"><label class="sr" for="pUrl">Primary channel URL</label><input id="pUrl" name="url" type="text" inputmode="url" autocapitalize="off" autocorrect="off" placeholder="youtube.com/@yourname" required pattern="(https?:\/\/)?[^\s\/]+\.[^\s]+" spellcheck="false"></div>
               <p class="line">where <span class="blank blank--aud"><label class="sr" for="pAudience">Audience size (optional)</label><select id="pAudience" name="audience">
                   <option value="" selected>a growing number of</option>
                   <option value="lt10k">under 10K</option>
@@ -246,7 +270,7 @@
           </div>
 
           <div class="signed" id="signed" role="status" aria-live="polite">
-            <svg class="sig" viewBox="0 0 560 170" role="img" aria-label="Join Ludyte"><text class="sig-text" x="280" y="118" text-anchor="middle">Join Ludyte</text></svg>
+            <svg class="sig" viewBox="0 0 560 170" role="img" aria-label="Join Ludyte"><defs><linearGradient id="sigFeather" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff"/><stop offset=".93" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="sigReveal" maskUnits="userSpaceOnUse" x="-40" y="-60" width="640" height="290"><g transform="translate(0 118) skewX(-18) translate(0 -118)"><rect class="sig-wipe" x="-800" y="-80" width="800" height="330" fill="url(#sigFeather)"/></g></mask></defs><text class="sig-text" id="sigText" x="280" y="118" text-anchor="middle" mask="url(#sigReveal)">Join Ludyte</text></svg>
             <span class="sig-line" aria-hidden="true"></span>
             <p class="sig-caption" id="sigCaption"><span class="sig-name" id="capName">&nbsp;</span><span id="capRole">Founding Explorer</span></p>
             <p class="sig-thanks" id="sigThanks"><span>Thank you for standing with us.</span><span>We’ll review your application and follow up by email.</span></p>
@@ -262,8 +286,6 @@
             </div>
           </div>
         </div>
-
-        <p class="sig-date"><span class="sig-date__lbl">Signed</span><span class="sig-date__val" id="capDate">&nbsp;</span></p>
         <div class="seal" aria-hidden="true">
           <svg viewBox="0 0 200 200">
             <defs>
@@ -312,8 +334,7 @@
   function clear(el){ const h=holder(el); if(h) h.classList.remove('is-missing'); }
 
   const urlEl=document.getElementById('pUrl');
-  function fixUrl(){ const v=urlEl.value.trim(); if(v && !/^[a-z][a-z0-9+.-]*:\/\//i.test(v)) urlEl.value='https://'+v.replace(/^\/+/,''); }
-  urlEl.addEventListener('blur',fixUrl);
+  
 
   const steps=[...form.querySelectorAll('.step')], dots=[...document.querySelectorAll('#progress li')];
   const errEl=document.getElementById('qError');
@@ -324,7 +345,6 @@
 
   function setError(t){ errEl.textContent=t||''; }
   function validate(i){
-    if(i===1) fixUrl();
     const req=[...steps[i].querySelectorAll('[required]')];
     const bad=req.find(function(el){ const ok=el.type==='checkbox'?el.checked:el.checkValidity(); holder(el).classList.toggle('is-missing',!ok); return !ok; });
     if(!bad){ setError(''); return true; }
@@ -434,6 +454,21 @@
   }
   addEventListener('resize',function(){ if(apply.classList.contains('is-focus')) centerSheet(); });
 
+  /* 실제 서명처럼 좌→우 한 흐름: "Join" 을 쓰고 펜을 잠깐 뗐다가 "Ludyte" 로 이어짐. 멈춤 위치는 실제 글자 폭으로 계산 */
+  function drawSignature(reduce){
+    const txt=document.getElementById('sigText'), wipe=document.querySelector('.sig-wipe');
+    const bb=txt.getBBox(), skew=Math.tan(18*Math.PI/180)*(118-bb.y);        /* 비스듬한 경계가 글자 윗부분까지 지나가도록 여유 */
+    let joinEnd=bb.x+bb.width*.36; try{ joinEnd=txt.getStartPositionOfChar(0).x+txt.getSubStringLength(0,4); }catch(e){}
+    const start=bb.x-6, end=bb.x+bb.width+skew+70, pause=joinEnd+10;
+    const at=function(x){ return 'translateX('+(x+56)+'px)'; };               /* 부드러운 경계(완전히 보이는 끝)를 x 에 둠 */
+    if(reduce){ wipe.style.transform=at(end); return; }
+    wipe.animate([
+      {transform:at(start), easing:'cubic-bezier(.35,.05,.45,1)'},
+      {transform:at(pause), offset:.38},
+      {transform:at(pause+4), offset:.47, easing:'cubic-bezier(.3,.1,.35,1)'},
+      {transform:at(end)}
+    ],{duration:2400, fill:'forwards'});
+  }
   async function sign(){
     const name=nameEl.value.trim(), reduce=reduceMq.matches, signed=document.getElementById('signed');
     document.getElementById('capName').textContent=name; document.getElementById('capDate').textContent=today;
@@ -448,8 +483,8 @@
     await fontReady;
     await wait(reduce?0:450);
     signed.classList.add('line'); await wait(reduce?0:700);   /* 서명선 */
-    signed.classList.add('draw'); await wait(reduce?0:2500);  /* "Join Ludyte" */
-    signed.classList.add('caption'); await wait(reduce?0:700);
+    signed.classList.add('draw'); drawSignature(reduce); await wait(reduce?0:2500);  /* "Join Ludyte" */
+    signed.classList.add('caption'); sheet.classList.add('is-captioned'); await wait(reduce?0:700);
     sheet.classList.add('sealed');                             /* 인장 */
     apply.classList.add('is-done');
   }
