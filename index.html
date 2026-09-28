@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght,SOFT@9..144,700..900,0..100&family=Instrument+Serif:ital@0;1&family=Mrs+Saint+Delafield&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Mrs+Saint+Delafield&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
   @font-face{font-family:"Mona Sans SemiCondensed";font-weight:600;font-style:normal;font-display:swap;src:url("assets/fonts/MonaSans_SemiCondensed-SemiBold.ttf") format("truetype")}
   @font-face{font-family:"Mona Sans SemiCondensed";font-weight:700;font-style:normal;font-display:swap;src:url("assets/fonts/MonaSans_SemiCondensed-Bold.ttf") format("truetype")}
@@ -423,10 +423,10 @@
   .pl-sheet.is-captioned .pl-sig-date{opacity:1}
   .pl-signed.caption .pl-sig-caption,.pl-signed.caption .pl-sig-thanks{opacity:1;translate:0 0}
 
-  .pl-seal{position:absolute;right:38px;bottom:26px;width:126px;height:126px;color:var(--brand-red);mix-blend-mode:multiply;opacity:0;scale:1.9;rotate:-24deg;pointer-events:none}
-  .pl-seal svg{display:block;width:100%;height:100%;overflow:visible}
+  .pl-seal{position:absolute;right:38px;bottom:26px;width:118px;height:auto;aspect-ratio:480/710;color:var(--brand-red);mix-blend-mode:multiply;opacity:0;scale:1.9;rotate:-24deg;pointer-events:none}
+  .pl-seal img{display:block;width:100%;height:100%}
   .pl-sheet.sealed .pl-seal{animation:stamp .5s cubic-bezier(.2,.9,.3,1.08) forwards}
-  @keyframes stamp{0%{opacity:0;scale:1.45;rotate:-20deg}55%{opacity:.95}100%{opacity:.93;scale:1;rotate:-9deg}}
+  @keyframes stamp{0%{opacity:0;scale:1.45;rotate:-14deg}55%{opacity:1}100%{opacity:1;scale:1;rotate:-6deg}}
 
   /* ===== 3:4 종이: 모든 기기에서 같은 비율·같은 구성, 크기만 다름 =====
      폭은 최대 540px, 화면 높이가 낮으면 한 화면에 들어오도록 줄어듦. 글자·여백은 종이 폭(cqw)에 비례 */
@@ -449,15 +449,16 @@
   .pl-signed svg.pl-sig{width:min(100%,78cqw)}
   .pl-sig-line{width:min(100%,74cqw)}
   .pl-sig-caption .pl-sig-name{font-size:clamp(22px,5.6cqw,30px)}
-  .pl-sig-thanks{font-size:clamp(13px,4.7cqw,21px)}      /* 어느 폭에서도 두 줄 유지 */
-  .pl-seal{width:clamp(80px,23cqw,124px);height:clamp(80px,23cqw,124px);right:clamp(14px,6.5cqw,36px);bottom:clamp(14px,5cqw,28px)}
+  .pl-sig-thanks{font-size:clamp(13px,4.7cqw,21px)}
+  .pl-signed{translate:0 -7cqw}   /* 세로형 도장이 들어갈 아래 여백 확보: 서명 묶음을 종이 폭에 비례해 위로 */      /* 어느 폭에서도 두 줄 유지 */
+  .pl-seal{width:clamp(66px,21.5cqw,116px);height:auto;right:clamp(14px,6cqw,34px);bottom:clamp(12px,4.4cqw,26px)}
   .pl-sig-date{bottom:clamp(10px,3cqw,18px)}
   /* 좁은 종이(휴대폰): 제목 옆에 날짜가 들어갈 자리가 없으므로 왼쪽 아래(도장과 짝) */
   /* 아주 좁은 종이(320 폭 폰): 글자·도장을 한 단계 줄여 3:4 안에 여유 있게 */
   @container (max-width:300px){
     .pl-sheet{--fs-line:16px;--lh:26px;--fs-in:20px}
     .pl-sheet__title{font-size:20px}
-    .pl-seal{width:66px;height:66px}
+    .pl-seal{width:58px;height:auto}
     .pl-q-error{margin-top:2px}
     .pl-stage>.pl-step{row-gap:0}
     .pl-sig-caption .pl-sig-name{font-size:20px}
@@ -647,41 +648,7 @@
             </div>
           </div>
         </div>
-        <div class="pl-seal" aria-hidden="true">
-          <svg viewBox="0 0 200 200">
-            <defs>
-              <path id="sealTop" d="M32.5,100 A67.5,67.5 0 0,1 167.5,100"/>
-              <path id="sealBot" d="M20.5,100 A79.5,79.5 0 0,0 179.5,100"/>
-              <!-- 빈티지 고무 도장: 가장자리 잉크 번짐(흐림→문턱) · 드문 잉크 빠짐 · 종이 결 · 누른 힘의 차이 -->
-              <filter id="stampInk" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
-                <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="edge"/>
-                <feDisplacementMap in="SourceGraphic" in2="edge" scale="2" xChannelSelector="R" yChannelSelector="G" result="rough"/>
-                <feGaussianBlur in="rough" stdDeviation=".65" result="blur"/>
-                <feComponentTransfer in="blur" result="ink"><feFuncA type="linear" slope="7" intercept="-2.7"/></feComponentTransfer>
-                <feTurbulence type="fractalNoise" baseFrequency=".28" numOctaves="3" seed="12" result="spk"/>
-                <feColorMatrix in="spk" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -22 0 0 0 16.6" result="spkA"/>
-                <feComposite in="ink" in2="spkA" operator="in" result="speckled"/>
-                <feTurbulence type="fractalNoise" baseFrequency="2.4" numOctaves="1" seed="9" result="grain"/>
-                <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -14 0 0 0 10.9" result="grainA"/>
-                <feComposite in="speckled" in2="grainA" operator="in" result="grained"/>
-                <feTurbulence type="fractalNoise" baseFrequency=".02" numOctaves="2" seed="21" result="press"/>
-                <feColorMatrix in="press" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.4 0 0 0 .25" result="pressA"/>
-                <feComposite in="grained" in2="pressA" operator="in"/>
-              </filter>
-            </defs>
-            <g filter="url(#stampInk)" fill="currentColor">
-              <circle cx="100" cy="100" r="95" fill="none" stroke="currentColor" stroke-width="5.5"/>
-              <circle cx="100" cy="100" r="89" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 3.2"/>
-              <circle cx="100" cy="100" r="58.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4.4 3"/>
-              <circle cx="100" cy="100" r="54" fill="none" stroke="currentColor" stroke-width="3"/>
-              <text font-family="'Fraunces',Georgia,serif" font-weight="800" font-size="13.6" style="font-variation-settings:'SOFT' 100,'opsz' 72"><textPath href="#sealTop" startOffset="50%" text-anchor="middle" textLength="168" lengthAdjust="spacing"><tspan rotate="-0.8 -1.5 0.7 -1.9 0.2 -0.6 -1.9 0.0 -2.0 -0.3 -1.9 -1.8 -0.3 1.4 -1.7 -1.2 0.6" dy="0.45 0.08 -0.1 0.48 -0.45 0.36 -0.21 -0.36 -0.38 -0.19 0.32 -0.32 0.08 0.14 -0.13 0.05 -0.44">FOUNDING&#160; EXPLORER</tspan></textPath></text>
-              <text font-family="'Fraunces',Georgia,serif" font-weight="800" font-size="13.6" style="font-variation-settings:'SOFT' 100,'opsz' 72"><textPath href="#sealBot" startOffset="50%" text-anchor="middle" textLength="182" lengthAdjust="spacing"><tspan rotate="-1.9 -1.3 0.8 -0.3 -0.8 0.4 -0.2 -0.9 1.3 0.9 -1.1 0.3 0.1 1.7 1.0 -0.9 2.1" dy="-0.38 -0.08 0.26 -0.35 -0.01 -0.46 0.17 0.26 0.07 0.38 -0.19 0.2 0.09 0.08 -0.04 0.34 0.44">LUDYTE&#160; EXPEDITION</tspan></textPath></text>
-              <circle cx="27" cy="100" r="3.3"/>
-              <circle cx="173" cy="100" r="3.3"/>
-              <g transform="translate(100 99) scale(2.85) translate(-10.8 -10)"><path d="M8.97952 0.00201176C10.8691 -0.03377 12.7765 0.409992 14.5108 1.15533C14.9023 1.32342 15.288 1.50425 15.6465 1.73443C15.902 1.89811 16.1555 2.03368 16.333 2.2901C16.4792 2.50141 16.5273 2.80738 16.5928 3.05279C16.7143 3.5071 16.8678 3.95298 16.9893 4.40729C17.0362 4.582 17.0857 4.75641 17.1397 4.92877C17.1586 4.98987 17.165 5.07796 17.2041 5.12994C17.2367 5.17248 17.3054 5.18211 17.3526 5.19928C17.4567 5.23704 17.5587 5.28352 17.6621 5.3233C18.0197 5.46103 18.3743 5.63718 18.7119 5.81744C19.3924 6.18058 20.0712 6.58374 20.6221 7.12604C20.8567 7.35693 21.1038 7.60109 21.2696 7.88971C21.3816 8.08514 21.4767 8.29172 21.5293 8.50201V8.50299C21.5732 8.64004 21.5855 8.85371 21.5791 9.00494C21.5724 9.17064 21.5389 9.3414 21.4619 9.49225C21.2138 9.97848 20.4242 10.9671 17.9463 11.9268L17.6934 14.7891L13.7198 20.001L4.30471 14.5665L4.03811 10.8546C1.78908 9.82771 0.954125 8.836 0.954125 8.836C0.76781 8.64093 0.595919 8.43071 0.44436 8.20123C0.0821063 7.65269 -0.110139 7.00661 0.0664299 6.35748C0.156282 6.02693 0.357195 5.78144 0.548852 5.50885C0.782139 5.17669 1.16261 4.90582 1.50393 4.69146C2.22529 4.23853 3.0434 3.91772 3.87209 3.72564C4.18607 3.65307 4.50171 3.58663 4.81838 3.53229C4.92101 3.51473 5.02404 3.50277 5.126 3.4815C5.15872 3.47482 5.20122 3.48087 5.22952 3.461C5.27302 3.43022 5.29585 3.32595 5.31643 3.27838C5.38757 3.11311 5.44482 2.94168 5.51565 2.77643C5.68541 2.38059 5.85097 1.98009 6.00588 1.57818C6.10138 1.32951 6.18441 1.05557 6.32913 0.830137C6.53439 0.510127 6.85884 0.365325 7.21096 0.254941C7.77518 0.0778616 8.38899 0.0131747 8.97952 0.00201176ZM8.72854 12.046C9.17871 12.8289 9.95861 13.2649 10.8477 13.3633C11.2067 13.4031 11.5806 13.3415 11.9258 13.2481C12.3315 13.1382 12.7326 12.9296 13.0645 12.6544C11.6141 12.5786 10.1002 12.3356 8.72854 12.046ZM16.9317 12.2881C16.3518 12.4755 15.702 12.5841 15.0108 12.6378C15.2217 12.843 15.4881 12.9856 15.8047 13.0206C15.9917 13.0412 16.1898 13.0192 16.3711 12.9747C16.7419 12.8832 17.0324 12.6624 17.2949 12.3946C17.3584 12.3301 17.4172 12.2476 17.4658 12.171C17.4767 12.1541 17.5029 12.1159 17.5108 12.0909C17.3263 12.1568 17.1332 12.223 16.9317 12.2881ZM4.8135 4.68756C4.77029 4.68722 4.69681 4.84258 4.67385 4.87701C4.53985 5.07783 4.4303 5.27334 4.42288 5.50689C4.41955 5.60626 4.43973 5.70489 4.4717 5.79889C4.57598 6.10392 4.79683 6.35442 5.03811 6.56939C5.48983 6.97143 5.99984 7.28028 6.53225 7.56451C6.97483 7.80045 7.44248 7.98848 7.91409 8.15826C9.41237 8.69767 10.9605 8.95404 12.5459 8.97564C12.9732 8.98171 13.4032 8.97401 13.8281 8.919C14.0337 8.89235 14.2451 8.90045 14.4473 8.85455C14.6599 8.80631 14.884 8.79948 15.0987 8.75494C15.6964 8.63085 16.2932 8.47978 16.8418 8.20904L17.0733 8.086C17.4752 7.85548 17.8469 7.51487 17.7373 7.00201C17.6931 6.79644 17.6178 6.58958 17.5547 6.38873C17.5436 6.35327 17.5225 6.21564 17.4844 6.20416C17.4591 6.19724 17.3798 6.28659 17.3623 6.30475C17.2608 6.41086 17.1357 6.49567 17.0137 6.57623C16.5753 6.86568 16.0214 7.00781 15.5196 7.13873C14.9576 7.28519 14.3844 7.33988 13.8086 7.39557C12.7975 7.49312 11.7636 7.44219 10.7569 7.294C9.24919 7.07221 7.72685 6.62118 6.38088 5.8985C5.95764 5.67136 5.54338 5.41633 5.18459 5.09674C5.08677 5.00969 4.99205 4.90638 4.91311 4.80182C4.89414 4.77625 4.84847 4.6883 4.8135 4.68756Z"/></g>
-            </g>
-          </svg>
-        </div>
+        <div class="pl-seal" aria-hidden="true"><img src="assets/stamp/stamp.webp" srcset="assets/stamp/stamp.webp 480w, assets/stamp/stamp@2x.webp 960w" sizes="124px" width="480" height="710" alt="" decoding="async"></div>
       </form>
     </div>
   </div>
@@ -1241,7 +1208,7 @@
   async function sign(){
     const name=nameEl.value.trim(), reduce=reduceMq.matches, signed=document.getElementById('plSigned');
     document.getElementById('capName').textContent=name; document.getElementById('capDate').textContent=today;
-    const fontReady=document.fonts?document.fonts.load('800 16px "Fraunces"').catch(function(){}):Promise.resolve();
+    const fontReady=Promise.resolve();
     focusSheet();
     sheet.classList.add('is-signing');                       /* 질문·버튼이 제자리에서 사라짐 */
     await wait(reduce?0:500);

@@ -4,3 +4,7 @@
 
 # 보관용 영상 (페이지는 assets/hero-16x9.mp4 만 사용, 나머지는 assets/hero-archive/ 에 모아 둠)
 assets/hero-archive/
+
+# 도장 샘플(로컬 비교용)
+stamp-sample.html
+assets/stamp/*.png
