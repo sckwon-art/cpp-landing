@@ -199,7 +199,7 @@ Figma "Ludyte CPP — Strategy / Landing Explorations" › `01 · The Invitation
 
 | 파일 | 규격 | 비고 |
 |---|---|---|
-| `assets/hero-16x9.mp4` | 1920×1080 이상, H.264, 10~30초 | **연결됨** — `rotation-ramp-v27-satisfy-titles-high-quality.mp4` 원본 그대로(재인코딩 없이 faststart 만): 2560×1440, 60fps, 7.62초, 35.0Mbps, 33.4MB (로컬·GitHub Pages). 아티팩트는 `hero-archive/hero-16x9-crf19.mp4`(15MB 한도용 재인코딩). 쓰지 않는 이전 영상은 모두 `assets/hero-archive/` 에 보관(GitHub 제외) |
+| `assets/hero-16x9.mp4` | 1920×1080 이상, H.264, 10~30초 | **연결됨** — `rotation-ramp-v28-ludyte-spacing-high-quality.mp4` 원본 그대로(재인코딩 없이 faststart 만): 2560×1440, 60fps, 7.62초, 35.0Mbps, 33.3MB 한도용 재인코딩). 쓰지 않는 이전 영상은 모두 `assets/hero-archive/` 에 보관(GitHub 제외) |
 | `assets/hero-9x16.mp4` | 1080×1920, 동일 조건 | 미연결 — 세로 화면은 현재 16:9 영상을 중앙 크롭 |
 | `assets/poster.jpg` | 1920×1080, 200KB 이하 | **연결됨** — 0.5초 지점 프레임 |
 | `assets/logo.svg` | 91×20 | **연결됨** — Figma node 2248:57634 내보내기 |

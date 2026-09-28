@@ -142,10 +142,10 @@
   /* 위계: 서명 → 이름(크게) → 직함(작게). 날짜는 종이 왼쪽 아래, 오른쪽 아래 도장과 짝 */
   .sig-caption{gap:6px}
   .sig-caption .sig-name{font:400 30px/1.1 var(--font-doc);letter-spacing:0;text-transform:none;color:var(--paper-fg)}
-  .sheet__head{position:relative}
+  .sheet__head{position:static}   /* 날짜는 종이 기준으로 배치 */
   .progress{transition:opacity .4s var(--ease)}
   .sheet.is-signing .progress{opacity:0}
-  .sig-date{position:absolute;right:0;bottom:18px;display:grid;gap:5px;margin:0;text-align:right;opacity:0;transition:opacity .8s var(--ease)}
+  .sig-date{position:absolute;left:var(--pad-x,48px);right:auto;bottom:34px;display:grid;gap:5px;margin:0;text-align:left;opacity:0;transition:opacity .8s var(--ease)}
   .sig-date__val{font:400 17px/1.2 var(--font-doc);color:var(--paper-fg);white-space:nowrap}
   .sheet.is-captioned .sig-date{opacity:1}
   .signed.caption .sig-caption,.signed.caption .sig-thanks{opacity:1;translate:0 0}
@@ -186,7 +186,7 @@
   .sig-thanks{font-size:clamp(13px,4.7cqw,21px)}
   .signed{translate:0 -7cqw}   /* 세로형 도장이 들어갈 아래 여백 확보: 서명 묶음을 종이 폭에 비례해 위로 */      /* 어느 폭에서도 두 줄 유지 */
   .seal{width:clamp(66px,21.5cqw,116px);height:auto;right:clamp(14px,6cqw,34px);bottom:clamp(12px,4.4cqw,26px)}
-  .sig-date{bottom:clamp(10px,3cqw,18px)}
+  .sig-date{bottom:clamp(22px,6.3cqw,34px)}   /* 왼쪽 아래, 오른쪽 아래 도장과 짝 */
   /* 좁은 종이(휴대폰): 제목 옆에 날짜가 들어갈 자리가 없으므로 왼쪽 아래(도장과 짝) */
   /* 아주 좁은 종이(320 폭 폰): 글자·도장을 한 단계 줄여 3:4 안에 여유 있게 */
   @container (max-width:300px){
@@ -198,8 +198,6 @@
     .sig-caption .sig-name{font-size:20px}
   }
   @container (max-width:460px){
-    .sheet__head{position:static}
-    .sig-date{left:var(--pad-x);right:auto;bottom:clamp(22px,7cqw,34px);text-align:left}
     .sig-date__val{font-size:15px}
   }
   /* 터치 기기: 빈칸의 터치 영역만 위로 넓힘 */
@@ -209,6 +207,7 @@
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important;animation-duration:.01ms!important;animation-delay:0s!important}
   }
+  .line.line--optional{font-size:clamp(11px,2.3cqw,12px);line-height:1.4;letter-spacing:.01em;white-space:nowrap}   /* 선택 안내: 작게 한 줄 */
 </style>
 </head>
 <body>
@@ -265,7 +264,7 @@
             <div class="step" data-step="4" inert>
               <p class="line" id="chapterLbl">The next chapter I want to open is</p>
               <div class="field field--area"><textarea id="pChapter" name="chapter" rows="2" aria-labelledby="chapterLbl" placeholder="a few words, if you like…"></textarea></div>
-              <p class="line line--note">Optional. Leave it blank if it’s still taking shape.</p>
+              <p class="line line--note line--optional">Optional — you can leave it blank.</p>
             </div>
             <p class="q-error" id="qError" role="status" aria-live="polite"></p>
           </div>

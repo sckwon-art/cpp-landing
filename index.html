@@ -415,10 +415,10 @@
   /* 위계: 서명 → 이름(크게) → 직함(작게). 날짜는 종이 왼쪽 아래, 오른쪽 아래 도장과 짝 */
   .pl-sig-caption{gap:6px}
   .pl-sig-caption .pl-sig-name{font:400 30px/1.1 var(--font-doc);letter-spacing:0;text-transform:none;color:var(--paper-fg)}
-  .pl-sheet__head{position:relative}
+  .pl-sheet__head{position:static}   /* 날짜는 종이 기준으로 배치 */
   .pl-progress{transition:opacity .4s var(--ease)}
   .pl-sheet.is-signing .pl-progress{opacity:0}
-  .pl-sig-date{position:absolute;right:0;bottom:18px;display:grid;gap:5px;margin:0;text-align:right;opacity:0;transition:opacity .8s var(--ease)}
+  .pl-sig-date{position:absolute;left:var(--pad-x,48px);right:auto;bottom:34px;display:grid;gap:5px;margin:0;text-align:left;opacity:0;transition:opacity .8s var(--ease)}
   .pl-sig-date__val{font:400 17px/1.2 var(--font-doc);color:var(--paper-fg);white-space:nowrap}
   .pl-sheet.is-captioned .pl-sig-date{opacity:1}
   .pl-signed.caption .pl-sig-caption,.pl-signed.caption .pl-sig-thanks{opacity:1;translate:0 0}
@@ -452,7 +452,7 @@
   .pl-sig-thanks{font-size:clamp(13px,4.7cqw,21px)}
   .pl-signed{translate:0 -7cqw}   /* 세로형 도장이 들어갈 아래 여백 확보: 서명 묶음을 종이 폭에 비례해 위로 */      /* 어느 폭에서도 두 줄 유지 */
   .pl-seal{width:clamp(66px,21.5cqw,116px);height:auto;right:clamp(14px,6cqw,34px);bottom:clamp(12px,4.4cqw,26px)}
-  .pl-sig-date{bottom:clamp(10px,3cqw,18px)}
+  .pl-sig-date{bottom:clamp(22px,6.3cqw,34px)}   /* 왼쪽 아래, 오른쪽 아래 도장과 짝 */
   /* 좁은 종이(휴대폰): 제목 옆에 날짜가 들어갈 자리가 없으므로 왼쪽 아래(도장과 짝) */
   /* 아주 좁은 종이(320 폭 폰): 글자·도장을 한 단계 줄여 3:4 안에 여유 있게 */
   @container (max-width:300px){
@@ -464,8 +464,6 @@
     .pl-sig-caption .pl-sig-name{font-size:20px}
   }
   @container (max-width:460px){
-    .pl-sheet__head{position:static}
-    .pl-sig-date{left:var(--pad-x);right:auto;bottom:clamp(22px,7cqw,34px);text-align:left}
     .pl-sig-date__val{font-size:15px}
   }
   /* 터치 기기: 빈칸의 터치 영역만 위로 넓힘 */
@@ -539,6 +537,7 @@
     .ending-title{filter:none}
     .apply.pre-in .apply__story>*,.apply.pre-in .pl-sheet-wrap{opacity:1;translate:0 0;transform:none}
   }
+  .pl-line.pl-line--optional{font-size:clamp(11px,2.3cqw,12px);line-height:1.4;letter-spacing:.01em;white-space:nowrap}   /* 선택 안내: 작게 한 줄 */
 </style>
 </head>
 <body>
@@ -682,7 +681,7 @@
             <div class="pl-step" data-step="4" inert>
               <p class="pl-line" id="chapterLbl">The next chapter I want to open is</p>
               <div class="pl-field pl-field--area"><textarea id="pChapter" name="chapter" rows="2" aria-labelledby="chapterLbl" placeholder="a few words, if you like…"></textarea></div>
-              <p class="pl-line pl-line--note">Optional. Leave it blank if it’s still taking shape.</p>
+              <p class="pl-line pl-line--note pl-line--optional">Optional — you can leave it blank.</p>
             </div>
             <p class="pl-q-error" id="plError" role="status" aria-live="polite"></p>
           </div>
@@ -1324,7 +1323,7 @@
       const t=cs.textTransform==='uppercase'?el.textContent.trim().toUpperCase():el.textContent.trim();
       p.textAlign=align||'left'; p.fillText(t, align==='center'?r.x+r.w/2:(align==='right'?r.x+r.w:r.x), r.y+r.h/2); };
     const q=function(s){ return document.querySelector(s); };
-    txt(q('.pl-sheet__title')); txt(q('#capDate'),'right');
+    txt(q('.pl-sheet__title')); txt(q('#capDate'),'left');
     const hd=rel(q('.pl-sheet__head')); p.fillStyle='rgba(60,48,30,.28)'; p.fillRect(hd.x,hd.y+hd.h-3*k,hd.w,1*k); p.fillRect(hd.x,hd.y+hd.h-1*k,hd.w,1*k);
     const sv=rel(q('svg.pl-sig')); p.save(); p.translate(sv.x,sv.y); p.scale(sv.w/560,sv.h/170); p.fillStyle='#3a332d'; p.fill(new Path2D(q('.pl-sig-ink').getAttribute('d'))); p.restore();
     const ln=rel(q('.pl-sig-line')); p.fillStyle='rgba(28,27,24,.7)'; p.fillRect(ln.x,ln.y,ln.w,Math.max(1.5*k,ln.h));
